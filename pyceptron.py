@@ -1,6 +1,8 @@
 import numpy as np
+from matplotlib.colors import ListedColormap
+import matplotlib.pyplot as plt
 
-def Perceptron(object):
+class Perceptron(object):
     """Perceptron classifier
     
     Parameters
@@ -51,7 +53,6 @@ def Perceptron(object):
             self.errors.append(errors)
         return self
 
-
     def net_input(self, X):
         """Calculate the net input"""
         return np.dot(X, self.w[1:] + self.w[0])
@@ -59,3 +60,7 @@ def Perceptron(object):
     def predict(self, X):
         """Return class label  after unit step."""
         return np.where(self.net_input(X) >= 0.0,1,-1)
+
+    def plot_precision_regions(X, y, classifier, resolution=0.02):
+        """Method utilized to visualize the decision boundaries for two dimensional datasets."""
+        pass
