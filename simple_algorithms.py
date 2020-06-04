@@ -67,7 +67,7 @@ class Perceptron(object):
         return np.where(self.net_input(X) >= 0.0,1,-1)
 
 
-class GradientDescent(object):
+class AdalineGD(object):
     """ADAptive LInear NEuron classifier.
 
     Parameters
@@ -91,7 +91,6 @@ class GradientDescent(object):
         self.n = n
         self.random_state = random_state
     
-
     def fit(self, X, y):
         """Fit the training data.
         
@@ -119,17 +118,112 @@ class GradientDescent(object):
             self.cost.append(cost)
         return self
     
+    def net_input(self, X):
+        """Calculate the net input."""
+        return np.dot(X, self.w[1:]) + self.w[0]
+    
+    def activation(self, X):
+        """Compute linear activation."""
+        return X
+    
+    def predict(self, X):
+        """Return class label after unit step."""
+        return np.where(self.activation(self.net_input(X)) >= 0.0, 1, -1)
+
+
+class AdalineSGD(object):
+    """ADAptive LInear NEuron classifier.
+
+    Parameters
+    --------------------
+    eta : float.
+        Learning rate (between 0.0 and 0.1)
+    n : int
+        Passes over the training dataset.
+    shuffle : bool (default : True)
+        Shuffles training data every epoch if True to prevent cycles.
+    random_state : int
+        Random number generator seed for random weight initialization.
+    
+    Attributes
+    --------------------
+    w : 1d-array
+        Weights after fitting.
+    cost : list
+        Sum-of-Squares cost function value averaged over all training examples in each epoch.
+    """
+    def __init__(self, eta=0.1, n= 50, shuffle=True, random_state=None):
+        self.eta = eta
+        self.n = n
+        self.w_initialized = False
+        self.shuffle = shuffle
+        self.random_state = random_state
+    
+    def fit(self, X, y):
+        """Fit the training data.
+        
+        Parameters
+        --------------------
+        X : {array-like}, shape = [samples, features]
+            Training vectors, where samples is the number of examples and features is the number of features.
+        y : {array-like}, shape = [samples]
+            Target values.
+            
+            Returns
+            --------------------
+            self : object
+        """
+        self._initialize_weights(X.shape[1])
+        self.cost = []
+        for i in range(self.n):
+            if self.shuffle:
+                X, y = self._shuffle(X,y)
+                cost=[]
+                for xi, target in zip(X, y):
+                    cost.append(self._update_weights(xi, target))
+            avg_cost = sum(cost) / len(y)
+            self.cost.append(avg_cost)
+        return self
+
+def partial_fit(self, X, y):
+    """Fit training data without reinitializing the weights."""
+    if not self.w_initialized:
+        self._initialize_weights(X.shape[1])
+    if y.ravel().shape[0] > 1:
+        for xi, target in zip(X, y):
+            self._update_weights(xi, target)
+    else:
+        self._update_weights(X, y)
+    return self
+
+def _shuffle(self, X, y):
+    """Shuffle training data."""
+    r = self.rgen.permutation(len(y))
+    return X[r], y[r]
+
+def _initialize_weights(self, m):
+    """Initialize the weights to small random numbers."""
+    self.rgen = np.random.RandomState(self.random_state)
+    self.w = self.rgen_normal(loc=0.0, scale=0.1, size=1 + m)
+    self.w_initialized = True
+
+def _update_weights(self, xi, target):
+    """Apply adaline learning rule to update the weights."""
+    output = self.activation(self.net_input(xi))
+    error = (target - output)
+    self.w[1:] += self.eta * xi.dot(error)
+    self.w[0] += self.eta * error
+    cost = 0.5 * error ** 2 
+    return cost
 
     def net_input(self, X):
         """Calculate the net input."""
         return np.dot(X, self.w[1:]) + self.w[0]
     
-
     def activation(self, X):
         """Compute linear activation."""
         return X
     
-
     def predict(self, X):
         """Return class label after unit step."""
         return np.where(self.activation(self.net_input(X)) >= 0.0, 1, -1)
