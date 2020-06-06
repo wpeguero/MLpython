@@ -4,7 +4,36 @@ from matplotlib.colors import ListedColormap
 
 
 def main():
-    pass
+    """
+    This contains the sample runs from the book Python Machine Learning
+    """
+    import pandas as pd
+    #Show the last portion of the Dataframe
+    df = pd.read_csv('D:\Github\MLpython\iris.data', header=None, encoding='utf-8')
+    df.tail()
+    y = df.iloc[0:100, 4].values
+    y = np.where(y == 'Iris-setosa', -1, 1)
+    ##extract sepal length and petal length
+    X = df.iloc[0:100, [0,2]].values
+    ##plot data
+    plt.figure(1)
+    plt.scatter(X[:50, 0], X[:50, 1], color='red', marker='o', label='setosa')
+    plt.scatter(X[50:100 , 0], X[50:100, 1], color='blue', marker='x', label='versicolor')
+    plt.xlabel('sepal length [cm]')
+    plt.xlabel('petal length [cm]')
+    plt.legend(loc='upper left')
+    #Comparing the epochs with the number of updates
+    ppn = Perceptron(eta=0.1, n=10)
+    ppn.fit(X,y)
+    plt.figure(2)
+    plt.plot(range(1, len(ppn.errors) + 1), ppn.errors, marker='o')
+    #Plot decision regions (show the effect of a perceptron on deciding the difference b/w setosa and versicolor)
+    plot_precision_regions(X, y, classifier=ppn)
+    plt.figure(3)
+    plt.xlabel('sepal length [cm]')
+    plt.ylabel('petal length [cm]')
+    plt.legend(loc='upper left')
+    plt.show()
 
 
 class Perceptron(object):
