@@ -8,7 +8,13 @@ def main():
     This contains the sample runs from the book Python Machine Learning
     """
     import pandas as pd
+    from sklearn import datasets
+    from sklearn.model_selection import train_test_split
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.linear_model import Perceptron
+    ###
     #Show the last portion of the Dataframe
+    ###
     df = pd.read_csv('D:\Github\MLpython\iris.data', header=None, encoding='utf-8')
     df.tail()
     y = df.iloc[0:100, 4].values
@@ -16,24 +22,32 @@ def main():
     ##extract sepal length and petal length
     X = df.iloc[0:100, [0,2]].values
     ##plot data
-    plt.figure(1)
+    plt.figure()
+    plt.title('Iris Dataset [100]')
     plt.scatter(X[:50, 0], X[:50, 1], color='red', marker='o', label='setosa')
     plt.scatter(X[50:100 , 0], X[50:100, 1], color='blue', marker='x', label='versicolor')
     plt.xlabel('sepal length [cm]')
     plt.xlabel('petal length [cm]')
     plt.legend(loc='upper left')
+    ###
     #Comparing the epochs with the number of updates
+    ###
     ppn = Perceptron(eta=0.1, n=10)
     ppn.fit(X,y)
-    plt.figure(2)
+    plt.figure()
+    plt.title('Number of Updates vs. Epochs')
     plt.plot(range(1, len(ppn.errors) + 1), ppn.errors, marker='o')
+    ###
     #Plot decision regions (show the effect of a perceptron on deciding the difference b/w setosa and versicolor)
+    ###
     plot_precision_regions(X, y, classifier=ppn)
-    plt.figure(3)
+    plt.figure()
+    plt.title('Decision Region')
     plt.xlabel('sepal length [cm]')
     plt.ylabel('petal length [cm]')
     plt.legend(loc='upper left')
     plt.show()
+
 
 
 class Perceptron(object):
@@ -214,36 +228,36 @@ class AdalineSGD(object):
             self.cost.append(avg_cost)
         return self
 
-def partial_fit(self, X, y):
-    """Fit training data without reinitializing the weights."""
-    if not self.w_initialized:
-        self._initialize_weights(X.shape[1])
-    if y.ravel().shape[0] > 1:
-        for xi, target in zip(X, y):
-            self._update_weights(xi, target)
-    else:
-        self._update_weights(X, y)
-    return self
+    def partial_fit(self, X, y):
+        """Fit training data without reinitializing the weights."""
+        if not self.w_initialized:
+            self._initialize_weights(X.shape[1])
+        if y.ravel().shape[0] > 1:
+            for xi, target in zip(X, y):
+                self._update_weights(xi, target)
+        else:
+            self._update_weights(X, y)
+        return self
 
-def _shuffle(self, X, y):
-    """Shuffle training data."""
-    r = self.rgen.permutation(len(y))
-    return X[r], y[r]
+    def _shuffle(self, X, y):
+        """Shuffle training data."""
+        r = self.rgen.permutation(len(y))
+        return X[r], y[r]
 
-def _initialize_weights(self, m):
-    """Initialize the weights to small random numbers."""
-    self.rgen = np.random.RandomState(self.random_state)
-    self.w = self.rgen_normal(loc=0.0, scale=0.1, size=1 + m)
-    self.w_initialized = True
+    def _initialize_weights(self, m):
+        """Initialize the weights to small random numbers."""
+        self.rgen = np.random.RandomState(self.random_state)
+        self.w = self.rgen_normal(loc=0.0, scale=0.1, size=1 + m)
+        self.w_initialized = True
 
-def _update_weights(self, xi, target):
-    """Apply adaline learning rule to update the weights."""
-    output = self.activation(self.net_input(xi))
-    error = (target - output)
-    self.w[1:] += self.eta * xi.dot(error)
-    self.w[0] += self.eta * error
-    cost = 0.5 * error ** 2 
-    return cost
+    def _update_weights(self, xi, target):
+        """Apply adaline learning rule to update the weights."""
+        output = self.activation(self.net_input(xi))
+        error = (target - output)
+        self.w[1:] += self.eta * xi.dot(error)
+        self.w[0] += self.eta * error
+        cost = 0.5 * error ** 2 
+        return cost
 
     def net_input(self, X):
         """Calculate the net input."""
@@ -258,7 +272,7 @@ def _update_weights(self, xi, target):
         return np.where(self.activation(self.net_input(X)) >= 0.0, 1, -1)
 
 
-def plot_precision_regions(self, X, y, classifier, resolution=0.02):
+def plot_precision_regions(X, y, classifier, resolution=0.02):
     """Method utilized to visualize the decision boundaries for two dimensional datasets."""
     #Setup marker generator and color map
     MARKERS = ('s', 'x', 'o', '^', 'v')
