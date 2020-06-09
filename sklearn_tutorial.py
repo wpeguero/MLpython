@@ -31,10 +31,24 @@ def main():
     print('Accuracy %.3f' % ppn.score(X_test_std, y_test))
     X_combined_std = np.vstack((X_train_std, X_test_std))
     y_combined = np.hstack((y_train, y_test))
+    plt.figure()
     plot_decision_regions(X=X_combined_std, y=y_combined, classifier=ppn, test_idx=range(105, 150))
     plt.xlabel( 'petal length [standardized]' )
     plt.ylabel( 'petal width [standardized]' )
     plt.legend(loc= 'upper left' )
+    plt.tight_layout()
+    z = np.arange(-7, 7, 0.1)
+    phi_z = sigmoid(z)
+    plt.figure()
+    plt.plot(z, phi_z)
+    plt.axvline(0.0, color='black')
+    plt.ylim(-1, 1)
+    plt.xlabel('x')
+    plt.ylabel('$\phi (z)$')
+    #y-axis ticks and gridline
+    plt.yticks([ 0.0, 0.5, 1.0])
+    ax = plt.gca()
+    ax.yaxis.grid(True)
     plt.tight_layout()
     plt.show()
 
@@ -60,7 +74,10 @@ def plot_decision_regions(X, y, classifier, test_idx=None, resolution=0.02):
     if test_idx:
         #plot all examples
         X_test, y_test = X[test_idx, :], y[test_idx]
-        plt.scatter(X_test[:, 0], X_test[:, 1], c='', edgecolors='black', alpha=1.0, linewidths=1, marker='o', s=100, label='test sets')
+        plt.scatter(X_test[:, 0], X_test[:, 1], c='none', edgecolors='black', alpha=1.0, linewidths=1, marker='o', s=100, label='test sets')
+
+def sigmoid(z):
+    return 1.0 / (1.0 + np.exp(z))
 
 
 if __name__ == "__main__":
