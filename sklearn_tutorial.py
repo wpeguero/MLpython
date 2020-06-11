@@ -129,7 +129,7 @@ class LogisticRegressionGD(object):
         self.w = rgen.normal(loc=0.0, scale=0.01, size=1 + X.shape[1])
         self.cost= []
         for i in range(self.n):
-            net_input = self.net_input(x)
+            net_input = self.net_input(X)
             output = self.activation(net_input)
             errors = (y - output)
             self.w[1:] += self.eta *X.T.dot(errors)
