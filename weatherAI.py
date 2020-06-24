@@ -2,10 +2,10 @@ import pandas as pd
 
 def main():
     """Trains data to predict the weather."""
-    df__weather__raw = pd.read_csv(r'D:\Github\Sample_Data\weather.csv', low_memory=False)
+    df__weather__raw = pd.read_csv(r'D:\Github\Sample_Data\weather.csv', low_memory=False) 
     df__weather = remove_empty_columns(df__weather__raw, 0.5)
-    print('Raw data: \n', df__weather__raw)
-    print('processed data: \n', df__weather)
+    column_names = df__weather.columns
+    print(column_names)
 
 
 def remove_empty_columns(df, percentage):
