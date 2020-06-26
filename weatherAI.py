@@ -9,8 +9,8 @@ def main():
     relative_time = time_difference(df__weather)
     relative_humidity = []
     for row in df__weather.itertuples():
-        T_wet = row.HourlyWetBulbTemperature
-        T_dry = row.HourlyDryBulbTemperature
+        T_wet = row.HourlyWetBulbTemperature #degrees Farenheit
+        T_dry = row.HourlyDryBulbTemperature #degrees Farenheit
         humidity = calculate_humidity(float(T_dry), float(T_wet))
         relative_humidity.append(humidity)
     df__weather['Time'] = relative_time
@@ -52,11 +52,13 @@ def time_difference(df):
 def calculate_humidity(T__dry_bulb, T__wet_bulb):
     """Calculates the relative humidity.
     ------------------------------------
-    *Temperature is in 'Celcius*"""
+    *Temperature is in Celsius*"""
+    T__dry_bulb__C = (T__dry_bulb - 32) * 5 / 9
+    T__wet_bulb__C = (T__wet_bulb - 32) * 5 / 9
     N = 0.6687451584
-    e_dry = 6.112 * np.e ** ((17.502 * T__dry_bulb) / (240.97 *T__dry_bulb))
-    e_wet = 6.112 * np.e ** ((17.502 * T__wet_bulb) / (240.97 *T__wet_bulb))
-    relative_humidity = ((e_wet - N * (1 + .00115 * T__wet_bulb) * (T__dry_bulb - T__wet_bulb)) / e_dry) * 100
+    e_dry = 6.112 * np.e ** ((17.502 * T__dry_bulb__C) / (240.97 *T__dry_bulb__C))
+    e_wet = 6.112 * np.e ** ((17.502 * T__wet_bulb__C) / (240.97 *T__wet_bulb__C))
+    relative_humidity = ((e_wet - N * (1 + .00115 * T__wet_bulb__C) * (T__dry_bulb__C - T__wet_bulb__C)) / e_dry) * 100
     return relative_humidity
 
 
