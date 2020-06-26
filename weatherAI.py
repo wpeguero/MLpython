@@ -1,15 +1,18 @@
 import pandas as pd
+from datetime import datetime
 
 def main():
     """Trains data to predict the weather."""
     df__weather__raw = pd.read_csv(r'D:\Github\MLpython\Sample_Data\weather.csv', low_memory=False) 
     df__weather = remove_empty_columns(df__weather__raw, 0.95)
-    column_names = df__weather.columns
     df__weather.to_csv("sample.csv")
 
 
-def test():
-    pass
+def test(): 
+    df__weather__raw = pd.read_csv(r'D:\Github\MLpython\Sample_Data\weather.csv', low_memory=False) 
+    df__weather = remove_empty_columns(df__weather__raw, 0.95)
+    time = []
+    time_difference(df__weather)
 
 
 def remove_empty_columns(df, percentage):
@@ -21,6 +24,21 @@ def remove_empty_columns(df, percentage):
     df = df.drop(drop_missing, axis=1)
     return df
 
+def time_difference(df):
+    """Calculates time difference based on datetime objects.
+    - Only works with dataframes that have a datetime string."""
+    dt = [] # stores all of the datetime objects
+    for row in df.itertuples():
+        d = datetime.strptime(row.DATE,"%Y-%m-%dT%H:%M:%S")
+        dt.append(d)
+        relative_time = []
+    for i in range(len(dt)):
+        if i > 0:
+            t_relative = dt[i] - dt[i-1]
+            relative_time.append(t_relative.total_seconds())
+    print(relative_time)
+
 
 if __name__ == "__main__":
-    main()
+    #main()
+    test()
