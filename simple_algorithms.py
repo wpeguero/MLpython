@@ -8,10 +8,6 @@ def main():
     This contains the sample runs from the book Python Machine Learning
     """
     import pandas as pd
-    from sklearn import datasets
-    from sklearn.model_selection import train_test_split
-    from sklearn.preprocessing import StandardScaler
-    from sklearn.linear_model import Perceptron
     ###
     #Show the last portion of the Dataframe
     ###
