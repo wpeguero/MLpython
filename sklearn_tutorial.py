@@ -4,6 +4,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import Perceptron, LogisticRegression, SGDClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.tree import export_graphviz
+from pydotplus import graph_from_dot_data
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -130,6 +133,21 @@ def main():
     plot_decision_regions(X_xor, y_xor, svm)
     plt.legend(loc='upper left')
     plt.tight_layout()
+    #Building a decision tree
+    plt.figure()
+    tree_model = DecisionTreeClassifier(criterion='gini', max_depth=4, random_state=1)
+    tree_model.fit(X_train, y_train)
+    X_combined = np.vstack((X_train, X_test))
+    y_combined = np.hstack((y_train, y_test))
+    plot_decision_regions(X_combined, y_combined, classifier=tree_model, test_idx=range(105,150))
+    plt.xlabel('petal length [cm]')
+    plt.ylabel('petal width [cm]')
+    plt.tight_layout()
+    plt.figure()
+    plot_tree(tree_model)
+    dot_data = export_graphviz(tree_model, filled=True, rounded=True, class_names=['Setosa', 'Versicolor', 'Virginica'], feature_names=['petal length', 'petal width'], out_file=None)
+    graph = graph_from_dot_data(dot_data)
+    graph.write_jpeg('tree.jpeg')
     plt.show()
 
 
