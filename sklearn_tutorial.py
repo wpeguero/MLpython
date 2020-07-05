@@ -6,6 +6,8 @@ from sklearn.metrics import accuracy_score
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.tree import export_graphviz
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from pydotplus import graph_from_dot_data
 import matplotlib.pyplot as plt
 import numpy as np
@@ -134,6 +136,9 @@ def main():
     plt.legend(loc='upper left')
     plt.tight_layout()
     #Building a decision tree
+    """
+    This portion of the code is not functioning properly
+    -----------------------------------------------------
     plt.figure()
     tree_model = DecisionTreeClassifier(criterion='gini', max_depth=4, random_state=1)
     tree_model.fit(X_train, y_train)
@@ -148,7 +153,28 @@ def main():
     dot_data = export_graphviz(tree_model, filled=True, rounded=True, class_names=['Setosa', 'Versicolor', 'Virginica'], feature_names=['petal length', 'petal width'], out_file=None)
     graph = graph_from_dot_data(dot_data)
     graph.write_jpeg('tree.jpeg')
+    """
+    plt.figure()
+    X_combined = np.vstack((X_train, X_test))
+    y_combined = np.hstack((y_train, y_test))
+    forest = RandomForestClassifier(criterion='gini', n_estimators=25, random_state=1, n_jobs=2)
+    forest.fit(X_train, y_train)
+    plot_decision_regions(X_combined, y_combined, classifier=forest, test_idx=range(105,150))
+    plt.xlabel('petal length [cm]')
+    plt.ylabel('petal width [cm]')
+    plt.legend(loc='upper left')
+    plt.tight_layout()
+    #K-Nearest Neighbors Example
+    plt.figure()
+    knn = KNeighborsClassifier(n_neighbors=5, p=2, metric='minkowski')
+    knn.fit(X_train__std, y_train)
+    plot_decision_regions(X_combined_std, y_combined, classifier=knn, test_idx=range(105,150))
+    plt.xlabel('petal length [standardized]')
+    plt.ylabel('petal width [standardized]')
+    plt.legend(loc='upper left')
+    plt.tight_layout()
     plt.show()
+
 
 
 class LogisticRegressionGD(object):
