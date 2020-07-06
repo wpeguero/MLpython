@@ -1,4 +1,5 @@
 import pandas as pd
+from io import StringIO
 from datetime import datetime
 import numpy as np
 
@@ -19,8 +20,15 @@ def main():
 
 
 def test(): 
-    pass
-
+    csv_data = \
+        '''A,B,C,D
+        1.0,2.0,3.0,4.0
+        5.0,6.0,,8.0
+        10.0,11.0,12.0,'''
+    df = pd.read_csv(StringIO(csv_data))
+    print(df.isnull().sum(), '\n')
+    print(df.values, '\n')
+    print(df.dropna(axis=0), '\n')
 
 def remove_empty_columns(df, percentage):
     """Removes all of the columns that are mainly empty based on a threshold value."""
@@ -67,5 +75,5 @@ def calculate_humidity(T__dry_bulb, T__wet_bulb):
 
 
 if __name__ == "__main__":
-    main()
-    #test()
+    #main()
+    test()
