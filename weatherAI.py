@@ -19,17 +19,6 @@ def main():
     df__weather.to_csv("sample__6_26_2020.csv")
 
 
-def test(): 
-    csv_data = \
-        '''A,B,C,D
-        1.0,2.0,3.0,4.0
-        5.0,6.0,,8.0
-        10.0,11.0,12.0,'''
-    df = pd.read_csv(StringIO(csv_data))
-    print(df.isnull().sum(), '\n')
-    print(df.values, '\n')
-    print(df.dropna(axis=0), '\n')
-
 def remove_empty_columns(df, percentage):
     """Removes all of the columns that are mainly empty based on a threshold value."""
     columns = df.columns
@@ -48,7 +37,6 @@ def time_difference(df):
         dt.append(d)
         relative_time = []
     for i in range(len(dt)):
-
         if i > 0:
             t_relative = dt[i] - dt[i-1]
             relative_time.append(t_relative.total_seconds())
