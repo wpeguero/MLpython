@@ -1,12 +1,13 @@
 import pandas as pd
-from io import StringIO
 from datetime import datetime
 import numpy as np
+from matplotlib.pyplot import plot, show
+from matplotlib.dates import date2num
 
 def main():
     """Trains data to predict the weather."""
     df__weather__raw = pd.read_csv(r'D:\Github\MLpython\Sample_Data\weather.csv', low_memory=False) 
-    df__weather = remove_empty_columns(df__weather__raw, 0.95)
+    df__weather = remove_empty_columns(df__weather__raw, 0.80)
     relative_time = time_difference(df__weather)
     relative_humidity = []
     for row in df__weather.itertuples():
@@ -16,8 +17,11 @@ def main():
         relative_humidity.append(humidity)
     df__weather['Time'] = relative_time
     df__weather['RelativeHumidity'] = relative_humidity
-    df__weather.to_csv("sample__6_26_2020.csv")
-
+    print('Before dropping the NaN values: \n \n',len(df__weather['RelativeHumidity']))
+    df__weather.dropna(subset=['RelativeHumidity'], inplace=True)
+    print('\n After dropping the NaN values: \n \n',len(df__weather['RelativeHumidity']))
+    print('\n Columns Left: \n \n', df__weather.columns, '\n \n Number of columns \n \n', len(df__weather.columns))
+    print(df__weather['Time'])
 
 def remove_empty_columns(df, percentage):
     """Removes all of the columns that are mainly empty based on a threshold value."""
@@ -32,6 +36,7 @@ def time_difference(df):
     """Calculates time difference based on datetime objects.
     - Only works with dataframes that have a datetime string."""
     dt = [] # stores all of the datetime objects
+    t_seconds = 0
     for row in df.itertuples():
         d = datetime.strptime(row.DATE,"%Y-%m-%dT%H:%M:%S")
         dt.append(d)
@@ -39,6 +44,7 @@ def time_difference(df):
     for i in range(len(dt)):
         if i > 0:
             t_relative = dt[i] - dt[i-1]
+            t_seconds += t_relative.total_seconds()
             relative_time.append(t_relative.total_seconds())
         else:
             t_relative = 0
@@ -57,11 +63,9 @@ def calculate_humidity(T__dry_bulb, T__wet_bulb):
         e_wet = 6.112 * np.e ** ((17.502 * T__wet_bulb__C) / (240.97 *T__wet_bulb__C))
         relative_humidity = ((e_wet - N * (1 + .00115 * T__wet_bulb__C) * (T__dry_bulb__C - T__wet_bulb__C)) / e_dry) * 100
     except ZeroDivisionError:
-        print("divide by zero error")
-        relative_humidity = ""
+        relative_humidity = None
     return relative_humidity
 
 
 if __name__ == "__main__":
-    #main()
-    test()
+    main()
