@@ -22,6 +22,7 @@ def main():
     print('\n After dropping the NaN values: \n \n',len(df__weather['RelativeHumidity']))
     print('\n Columns Left: \n \n', df__weather.columns, '\n \n Number of columns \n \n', len(df__weather.columns))
     print(df__weather['Time'])
+    df__weather.to_csv('Sample_Data/test.csv')
 
 def remove_empty_columns(df, percentage):
     """Removes all of the columns that are mainly empty based on a threshold value."""
@@ -35,7 +36,16 @@ def remove_empty_columns(df, percentage):
 def time_difference(df):
     """Calculates time difference based on datetime objects.
     - Only works with dataframes that have a datetime string."""
-    pass
+    dt = [] # stores all of the datetime objects
+    for row in df.itertuples():
+        d = datetime.strptime(row.DATE,"%Y-%m-%dT%H:%M:%S")
+        dt.append(d)
+    relative_time = []
+    for i in range(len(dt)):
+        delta = dt[i] - dt[0]
+        t_seconds = delta.total_seconds()
+        relative_time.append(t_seconds)
+    return relative_time
 
 def calculate_humidity(T__dry_bulb, T__wet_bulb):
     """Calculates the relative humidity.
