@@ -58,6 +58,8 @@ def calculate_humidity(T__dry_bulb, T__wet_bulb):
         e_dry = 6.112 * np.e ** ((17.502 * T__dry_bulb__C) / (240.97 *T__dry_bulb__C))
         e_wet = 6.112 * np.e ** ((17.502 * T__wet_bulb__C) / (240.97 *T__wet_bulb__C))
         relative_humidity = ((e_wet - N * (1 + .00115 * T__wet_bulb__C) * (T__dry_bulb__C - T__wet_bulb__C)) / e_dry) * 100
+        if relative_humidity < 0:
+            relative_humidity = None
     except ZeroDivisionError:
         relative_humidity = None
     return relative_humidity
