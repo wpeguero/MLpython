@@ -1,8 +1,7 @@
 import pandas as pd
 from datetime import datetime
 import numpy as np
-from matplotlib.pyplot import plot, show
-from matplotlib.dates import date2num
+import matplotlib.pyplot as plt
 
 def main():
     """Trains data to predict the weather."""
@@ -22,7 +21,8 @@ def main():
     print('\n After dropping the NaN values: \n \n',len(df__weather['RelativeHumidity']))
     print('\n Columns Left: \n \n', df__weather.columns, '\n \n Number of columns \n \n', len(df__weather.columns))
     df__weather.plot(x='Time', y='RelativeHumidity')
-    show()
+    plt.show()
+
 
 def remove_empty_columns(df, percentage):
     """Removes all of the columns that are mainly empty based on a threshold value."""
@@ -63,6 +63,25 @@ def calculate_humidity(T__dry_bulb, T__wet_bulb):
     except ZeroDivisionError:
         relative_humidity = None
     return relative_humidity
+
+def stat_values(input_list):
+    """Calculates statistical values from a list of data points and returns them as a dictionary."""
+    n = len(input_list)
+    X_barr = sum(input_list) / n
+    X_i_sq__list = []
+    for i in input_list:
+        value = i**2
+        X_i_sq__list.append(value)
+    svariance = ( 1 / n * (n - 1))(n * sum(x_i_sq__list) - sum(input_list) ** 2)
+    #Calculate the Standard deviation
+    top_sum = []
+    for i in input_list:
+        difference = i - X_barr
+        difference ** 2
+        top_sum.append(difference)
+    stdeviation = np.sqrt(sum(top_sum) / (n - 1))
+    svalues = {'mean': X_barr, 'SampleVariance': svariance, 'StandardDeviation': stdeviation}
+    return svalues
 
 
 if __name__ == "__main__":
