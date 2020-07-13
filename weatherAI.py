@@ -35,21 +35,7 @@ def remove_empty_columns(df, percentage):
 def time_difference(df):
     """Calculates time difference based on datetime objects.
     - Only works with dataframes that have a datetime string."""
-    dt = [] # stores all of the datetime objects
-    t_seconds = 0
-    for row in df.itertuples():
-        d = datetime.strptime(row.DATE,"%Y-%m-%dT%H:%M:%S")
-        dt.append(d)
-        relative_time = []
-    for i in range(len(dt)):
-        if i > 0:
-            t_relative = dt[i] - dt[i-1]
-            t_seconds += t_relative.total_seconds()
-            relative_time.append(t_relative.total_seconds())
-        else:
-            t_relative = 0
-            relative_time.append(t_relative)
-    return relative_time
+    pass
 
 def calculate_humidity(T__dry_bulb, T__wet_bulb):
     """Calculates the relative humidity.
