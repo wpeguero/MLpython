@@ -21,8 +21,8 @@ def main():
     df__weather.dropna(subset=['RelativeHumidity'], inplace=True)
     print('\n After dropping the NaN values: \n \n',len(df__weather['RelativeHumidity']))
     print('\n Columns Left: \n \n', df__weather.columns, '\n \n Number of columns \n \n', len(df__weather.columns))
-    print(df__weather['Time'])
-    df__weather.to_csv('Sample_Data/test.csv')
+    df__weather.plot(x='Time', y='RelativeHumidity')
+    show()
 
 def remove_empty_columns(df, percentage):
     """Removes all of the columns that are mainly empty based on a threshold value."""
