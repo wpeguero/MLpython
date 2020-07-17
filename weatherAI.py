@@ -72,7 +72,7 @@ def stat_values(input_list):
     for i in input_list:
         value = i**2
         X_i_sq__list.append(value)
-    svariance = ( 1 / n * (n - 1))(n * sum(x_i_sq__list) - sum(input_list) ** 2)
+    svariance = ( 1 / n * (n - 1))(n * sum(X_i_sq__list) - sum(input_list) ** 2)
     #Calculate the Standard deviation
     top_sum = []
     for i in input_list:
