@@ -13,7 +13,7 @@ def main():
     column_definitions = []
     PDFObject = parser.from_file(r'C:\Users\Benjamin\Documents\Programming\Github\MLpython\Sample_Data\NSDUH-2015-DS0001-info-codebook.pdf')
     CodeBook = PDFObject['content']
-    print(find_definitions(CodeBook,'TXPAYOTSP2'))
+    print("\n",find_definitions(CodeBook,'TXPAYOTSP2'))
 
 
 def remove_empty_columns(df, percentage):
@@ -33,11 +33,18 @@ def remove_empty_columns(df, percentage):
 def find_definitions(text, column_name):
     """Finds the definition of the column from the codebook pdf."""
     text = text.replace('\n', '|')
-    pattern = str(column_name)  + '.*?' + '\|99' #need to add the 99 code at the end of the sentence.
+    pattern = str(column_name)  + '.*?' + '\|99'
     regex = re.compile(pattern)
     match = re.search(regex, text)
     result = match.group(0)
-    return result #Work with this result to create a
+    result = result.replace(".", "")
+    results = result.split('|')
+    column_definition__list = re.split('Len : \d', results[0])
+    column_definition = column_definition__list[1]
+    column_definition = column_definition.strip()
+    print(column_definition)
+    # Need to extract the definition behind the code now that the defined codes are split up.
+    return results
 
 
 if __name__ == "__main__":
