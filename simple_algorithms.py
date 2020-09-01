@@ -1,17 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
-
+import pandas as pd
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import Perceptron
 
 def main():
     """
     This contains the sample runs from the book Python Machine Learning
     """
-    import pandas as pd
-    from sklearn import datasets
-    from sklearn.model_selection import train_test_split
-    from sklearn.preprocessing import StandardScaler
-    from sklearn.linear_model import Perceptron
     ###
     #Show the last portion of the Dataframe
     ###
@@ -47,7 +46,6 @@ def main():
     plt.ylabel('petal length [cm]')
     plt.legend(loc='upper left')
     plt.show()
-
 
 
 class Perceptron(object):
@@ -270,7 +268,6 @@ class AdalineSGD(object):
     def predict(self, X):
         """Return class label after unit step."""
         return np.where(self.activation(self.net_input(X)) >= 0.0, 1, -1)
-
 
 def plot_precision_regions(X, y, classifier, resolution=0.02):
     """Method utilized to visualize the decision boundaries for two dimensional datasets."""
