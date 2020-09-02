@@ -7,7 +7,7 @@ from alive_progress import alive_bar
 
 def main():
     """Uses the National Survey on Drug use and Health 2015 (NSDUH2015) to..."""
-    df = pd.read_csv(r'C:\Users\Benjamin\Documents\Programming\Github\MLpython\Sample_Data\NSDUH_2015.csv')
+    df = pd.read_table(r'C:\Users\Benjamin\Documents\Programming\Github\MLpython\Sample_Data\NSDUH_2015__clsremoved.csv')
     df = remove_empty_columns(df, 0.005)
     column_names = df.columns
     column_definitions = []
@@ -42,9 +42,17 @@ def find_definitions(text, column_name):
     column_definition__list = re.split('Len : \d', results[0])
     column_definition = column_definition__list[1]
     column_definition = column_definition.strip()
+    code_definitions = []
+    for result in results:
+        if re.match(r'\d{1,2} = .*', result) is not None:
+            result = result.strip()
+            result_list = result.split(" = ")
+            code_definitions.append({str(result_list[0]) + '(' + column_name + ')'  :str(result_list[1])})
+        else:
+            print('Index: ',results.index(result), '\n', 'The result did not match the regex. \n \n')
     print(column_definition)
     # Need to extract the definition behind the code now that the defined codes are split up.
-    return results
+    return code_definitions
 
 
 if __name__ == "__main__":
