@@ -24,14 +24,16 @@ def main():
     }
     df__estimated_inpatient = df__estimated_inpatient.replace(',','',regex=True)
     df__estimated_inpatient = df__estimated_inpatient.astype(datatype)
+    df__estimated_inpatient = df__estimated_inpatient.drop(df__estimated_inpatient[df__estimated_inpatient['state'] == 'CW'].index, inplace=True)
     #%%Plot the Data
-    plt.figure(figsize=(20,10))
+    fig = plt.figure(figsize=(20,10))
+    fig.suptitle('Estimation of Inpatient Beds Occupied by State')
     ax1 = sns.barplot(x='state',y='Inpatient Beds Occupied Estimated', data=df__estimated_inpatient)
     try:
         plt.show(ax1)
     except TypeError as e:
         fig = ax1.get_figure()
-        fig.savefig('Estimation of Inpatiend Beds Occupied by State.png')
+        fig.savefig('/Sample_Data/Estimation of Inpatient Beds Occupied by State.png')
 
 
 def extract_groups(df, group_variable):
