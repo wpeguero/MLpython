@@ -20,7 +20,9 @@ def load_diagnostic_data(df,dcolumn,lcolumn):
     traindata = []
     for row in df.itertuples():
         entities__list = []
-        for kword in row.lcolumn:
+        kword__str = row.lcolumn
+        kword__list = kword__str.split(',')
+        for kword in kword__list:
             transcription = row.dcolumn
             start = transcription.find(kword)
             end = start + len(kword)
