@@ -8,14 +8,30 @@ import pandas as pd
 import spacy as sp
 
 def main():
-    pass
+    #%% Load DataFrame
+    df__transcriptions = pd.read_csv(r'C:\Users\Benjamin\Documents\Programming\Github\MLpython\Sample_Data\mtsamples.csv')
+    df__transcriptions.dropna(subset=['keywords'], inplace=True)
 
 
-def load_diagnostic_data(df):
+def load_diagnostic_data(df,dcolumn,lcolumn):
     """
     Labels all of the transcription field based on the keywords and the medical specialty.
     """
-    pass
+    traindata = []
+    for row in df.itertuples():
+        entities__list = []
+        for kword in row.lcolumn:
+            transcription = row.dcolumn
+            start = transcription.find(kword)
+            end = start + len(kword)
+            entity = (start, end, kword)
+            entities__list.append(entity)
+        entity__dict = {'entities': entities__list}
+        trainsample = (row.dcolumn, entity__dict)
+        traindata.append(trainsample)
+    return traindata
+
+
 
 def train_data(ldata):
     """
