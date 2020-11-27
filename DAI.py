@@ -10,7 +10,13 @@ import spacy as sp
 def main():
     #%% Load DataFrame
     df__transcriptions = pd.read_csv(r'C:\Users\Benjamin\Documents\Programming\Github\MLpython\Sample_Data\mtsamples.csv')
-    df__transcriptions.dropna(subset=['keywords'], inplace=True)
+    df__transcriptions = df__transcriptions.dropna(axis=0, how='any', subset=['transcription', 'keywords'])
+    df__transcriptions.reset_index(drop=True)
+    train_data = load_diagnostic_data(df__transcriptions, 'transcription','keywords')
+    with open(r'C:\Users\Benjamin\Documents\Programming\Github\MLpython\training_datav3.txt', 'w') as file:
+        text_train = str(train_data)
+        file.write(text_train)
+        file.close()
 
 
 def load_diagnostic_data(df,dcolumn,lcolumn):
@@ -18,18 +24,22 @@ def load_diagnostic_data(df,dcolumn,lcolumn):
     Labels all of the transcription field based on the keywords and the medical specialty.
     """
     traindata = []
-    for row in df.itertuples():
+    df[str(dcolumn)].astype(str)
+    df[str(lcolumn)].astype(str)
+    for index, row in df.iterrows():
         entities__list = []
-        kword__str = row.lcolumn
+        kword__str = row[str(lcolumn)]
         kword__list = kword__str.split(',')
         for kword in kword__list:
-            transcription = row.dcolumn
-            start = transcription.find(kword)
-            end = start + len(kword)
-            entity = (start, end, kword)
-            entities__list.append(entity)
+            transcription = row[str(dcolumn)]
+            transcription = transcription.lower()
+            if kword in transcription:
+                start = transcription.find(kword)
+                end = start + len(kword)
+                entity = (start, end, kword)
+                entities__list.append(entity)
         entity__dict = {'entities': entities__list}
-        trainsample = (row.dcolumn, entity__dict)
+        trainsample = (row[str(dcolumn)], entity__dict)
         traindata.append(trainsample)
     return traindata
 
