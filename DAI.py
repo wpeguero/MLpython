@@ -4,8 +4,12 @@ Diagnostic Artificial Intelligence, or DAI, is a program that will provide diagn
 
 2. ImagingDiagnosis
 """
+from spacy.util import compounding, minibatch
+from alive_progress import alive_bar
 import pandas as pd
 import spacy as sp
+import warnings
+import random
 
 def main():
     #%% Load DataFrame
@@ -75,7 +79,7 @@ def load_diagnostic_data(df,dcolumn,lcolumn):
                 start = 0
                 end = len(transcription)
                 entity = (start, end, label)
-            entity__dict = entity
+            entity__dict = {'entity': [entity]}
         trainsample = (row[str(dcolumn)], entity__dict)
         traindata.append(trainsample)
     return traindata
@@ -88,17 +92,75 @@ def __load_specialty_data(df,dcolumn,lcolumn):
     Creates training data based on the keywords provided and the specialty associated with it.
     """
     #Set initial conditions
-    train_data = []
+    traindata = []
     df[str(dcolumn)].astype(str)
     df[str(lcolumn)].astype(str)
     for row in df.itertuples():
-        pass
+        entities__list = []
+        specialty = row.lcolumn
+        sample__str = str(row.dcolumn)
+        if ',' in sample__str:
+            sample__list = sample__str.split(',')
+            for sample in sample__list:
+                sample = sample.strip()
+                start = 0
+                end = len(sample)
+                entity = (start, end, specialty)
+                entities__list.append(entity)
+            entity__dict = {'entity': entities__list}
+        else:
+            sample = sample__str
+            sample = sample.strip()
+            start = 0
+            end = len(sample)
+            entity = (start, end, specialty)
+            entity__dict = {'entity': [entity]}
+        trainsample = (row[str(dcolumn)], entity__dict)
+        traindata.append(trainsample)
+    return traindata
 
 def train_data(ldata):
     """
     Trains the loaded and parsed data into an nlp.
     """
-    pass
+    nlp = sp.blank('en')
+    ner = nlp.create_pipe('ner')
+    nlp.add_pipe(ner, last=True)
+    with alive_bar(len(ldata)) as bar:
+        for _,annotations in ldata:
+            for ent in annotations.get('entity'):
+                ner.add_label(ent [2])
+            bar('extracting entities.')
+    ##
+    # Disable unneeded pipes.
+    ##
+    pipe_exceptions = ['ner', 'trf_wordpiecer', 'trf_tok2vec']
+    other_pipes = [pipe for pipe in nlp.pipe_names if pipe not in pipe_exceptions]
+    ##
+    # Train the ner pipe only
+    ##
+    with nlp.disable_pipes(*other_pipes), warnings.catch_warning():
+        warnings.filterwarnings("once", category=UserWarning, module='spacy')
+        #Reset and initialize the weights randomly.
+        nlp.begin_training()
+        n_iter = 30
+        with alive_bar(n_iter) as bar:
+            for itn in range(n_iter):
+                random.shuffle(ldata)
+                losses = {}
+                #batch up the examples using spacys minibatch
+                batches = minibatch(ldata, size=compounding(4.0, 32.0, 1.001))
+                for batch in batches:
+                    texts, annotations = zip(*batch)
+                    nlp.update(
+                        texts,
+                        annotations,
+                        drop= 0.3,
+                        losses = losses
+                    )
+                print("losses", (losses['ner']/len(ldata)) * 100)
+                bar("training the data. Iteration {}".format(itn))
+    return nlp
 
 
 if __name__ == "__main__":
