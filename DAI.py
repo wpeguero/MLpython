@@ -8,20 +8,23 @@ from spacy.util import compounding, minibatch
 from alive_progress import alive_bar
 import pandas as pd
 import spacy as sp
+import itertools
 import warnings
 import random
 
 def main():
     #%% Load DataFrame
-    df__transcriptions = pd.read_csv(r'C:\Users\Benjamin\Documents\Programming\Github\MLpython\Sample_Data\mtsamples.csv')
+    df__transcriptions = pd.read_csv(r'D:\Users\wpeguerorosario\Documents\Github\MLpython\Sample_Data\mtsamples.csv')
     df__transcriptions = df__transcriptions.dropna(axis=0, how='any', subset=['transcription', 'keywords'])
     df__transcriptions.reset_index(drop=True)
-    train_data = load_diagnostic_data(df__transcriptions, 'transcription','keywords')
+    ldata = load_diagnostic_data(df__transcriptions, 'transcription','keywords') #Use EntityRuler to remove overlapping information.
+    nlp = train_data(ldata)
     #Extract data into a sample file for reviewing
     #with open(r'C:\Users\Benjamin\Documents\Programming\Github\MLpython\training_datav4.txt', 'w') as file:
     #    text_train = str(train_data)
     #    file.write(text_train)
     #    file.close()
+    return nlp
 
 
 def load_diagnostic_data(df,dcolumn,lcolumn):
@@ -58,15 +61,41 @@ def load_diagnostic_data(df,dcolumn,lcolumn):
         #Conditional statements for the fields provided
         if ',' in label__str: #There are multiple labels in a field.
             label__list = label__str.split(',') #Work on this portion to apply the load_diagnostic_data function in a general sense (i.e single label vs multiple labels)
+            if '' in label__list:
+                i = label__list.index('')
+                del label__list[i]
+            else:
+                pass
+            label__list.sort(key=len)
+            label__list = list(map(lambda it: it.strip(), label__list))
+            print('Label list before dup removal: ', '\n', label__list)
+            for a,b in itertools.combinations(label__list,2):
+                if a in b:
+                    print('\na: ', a, '\nb: ', b)
+                    try:
+                        i = label__list.index(a)
+                        del label__list[i]
+                    except ValueError:
+                        pass
+                elif b in a:
+                    print('\nb: ', b, '\na: ', a)
+                    try:
+                        i = label__list.index(b)
+                        del label__list[i]
+                    except ValueError:
+                        pass
+                else:
+                    pass
+            print('Label list after dup removal: ', '\n', label__list)
             for label in label__list:
                 label = label.lower()
                 label = label.strip()
                 if label in transcription:
                     start = transcription.find(label)
                     end = start + len(label)
-                    entity = (start, end, label)
-                    entities__list.append(entity)
-            entity__dict = {'entities': entities__list}
+                    entities = (start, end, label)
+                    entities__list.append(entities)
+            entities__dict = {'entities': entities__list}
         else: #There is only one label in the field.
             label = label__str
             label = label.lower()
@@ -74,13 +103,13 @@ def load_diagnostic_data(df,dcolumn,lcolumn):
             if label in transcription:
                 start = transcription.find(label)
                 end = start + len(label)
-                entity = (start, end, label)
+                entities = (start, end, label)
             else:
                 start = 0
                 end = len(transcription)
-                entity = (start, end, label)
-            entity__dict = {'entity': [entity]}
-        trainsample = (row[str(dcolumn)], entity__dict)
+                entities = (start, end, label)
+            entities__dict = {'entities': [entities]}
+        trainsample = (row[str(dcolumn)], entities__dict)
         traindata.append(trainsample)
     return traindata
 
@@ -105,17 +134,17 @@ def __load_specialty_data(df,dcolumn,lcolumn):
                 sample = sample.strip()
                 start = 0
                 end = len(sample)
-                entity = (start, end, specialty)
-                entities__list.append(entity)
-            entity__dict = {'entity': entities__list}
+                entities = (start, end, specialty)
+                entities__list.append(entities)
+            entities__dict = {'entities': entities__list}
         else:
             sample = sample__str
             sample = sample.strip()
             start = 0
             end = len(sample)
-            entity = (start, end, specialty)
-            entity__dict = {'entity': [entity]}
-        trainsample = (row[str(dcolumn)], entity__dict)
+            entities = (start, end, specialty)
+            entities__dict = {'entities': [entities]}
+        trainsample = (row[str(dcolumn)], entities__dict)
         traindata.append(trainsample)
     return traindata
 
@@ -128,9 +157,9 @@ def train_data(ldata):
     nlp.add_pipe(ner, last=True)
     with alive_bar(len(ldata)) as bar:
         for _,annotations in ldata:
-            for ent in annotations.get('entity'):
+            for ent in annotations.get('entities'):
                 ner.add_label(ent [2])
-            bar('extracting entities.')
+            bar.text('extracting entities.')
     ##
     # Disable unneeded pipes.
     ##
@@ -139,7 +168,7 @@ def train_data(ldata):
     ##
     # Train the ner pipe only
     ##
-    with nlp.disable_pipes(*other_pipes), warnings.catch_warning():
+    with nlp.disable_pipes(*other_pipes), warnings.catch_warnings():
         warnings.filterwarnings("once", category=UserWarning, module='spacy')
         #Reset and initialize the weights randomly.
         nlp.begin_training()
@@ -158,10 +187,10 @@ def train_data(ldata):
                         drop= 0.3,
                         losses = losses
                     )
-                print("losses", (losses['ner']/len(ldata)) * 100)
-                bar("training the data. Iteration {}".format(itn))
+                bar.text("training the data. Iteration {}".format(itn))
     return nlp
 
 
 if __name__ == "__main__":
-    main()
+    nlp = main()
+    nlp.to_disk(r'C:\Users\wpegu\Github\MLpython\DAIvB1')
