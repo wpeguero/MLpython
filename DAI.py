@@ -6,6 +6,7 @@ Diagnostic Artificial Intelligence, or DAI, is a program that will provide diagn
 """
 from spacy.util import compounding, minibatch
 from alive_progress import alive_bar
+from rapidfuzz import fuzz
 import pandas as pd
 import spacy as sp
 import itertools
@@ -61,32 +62,6 @@ def load_diagnostic_data(df,dcolumn,lcolumn):
         #Conditional statements for the fields provided
         if ',' in label__str: #There are multiple labels in a field.
             label__list = label__str.split(',') #Work on this portion to apply the load_diagnostic_data function in a general sense (i.e single label vs multiple labels)
-            if '' in label__list:
-                i = label__list.index('')
-                del label__list[i]
-            else:
-                pass
-            label__list.sort(key=len)
-            label__list = list(map(lambda it: it.strip(), label__list))
-            print('Label list before dup removal: ', '\n', label__list)
-            for a,b in itertools.combinations(label__list,2):
-                if a in b:
-                    print('\na: ', a, '\nb: ', b)
-                    try:
-                        i = label__list.index(a)
-                        del label__list[i]
-                    except ValueError:
-                        pass
-                elif b in a:
-                    print('\nb: ', b, '\na: ', a)
-                    try:
-                        i = label__list.index(b)
-                        del label__list[i]
-                    except ValueError:
-                        pass
-                else:
-                    pass
-            print('Label list after dup removal: ', '\n', label__list)
             for label in label__list:
                 label = label.lower()
                 label = label.strip()
@@ -147,6 +122,49 @@ def __load_specialty_data(df,dcolumn,lcolumn):
         trainsample = (row[str(dcolumn)], entities__dict)
         traindata.append(trainsample)
     return traindata
+
+def remove_duplicate_labels(label__list):
+    """Label Cleaner
+    ----------------
+    Removes duplicates in the label lists by comparing whether one item is in another.
+    
+    Parameters:
+    label__list (list): a list filled with labels that will be used to label information.
+    """
+    #Removes empty labels
+    if '' in label__list:
+        i = label__list.index('')
+        del label__list[i]
+    else:
+        pass
+    #Removes labels with '-'.
+    for label in label__list:
+        if '-' in label:
+            i = label__list.index(label)
+            del label__list[i]
+        else:
+            pass
+    #Removes labels that are generalized versions of other labels
+    label__list.sort(key=len)
+    label__list = list(map(lambda it: it.strip(), label__list))
+    for a,b in itertools.combinations(label__list,2):
+        ratio = fuzz.ratio(a,b)
+        if a in b:
+            try:
+                i = label__list.index(a)
+                del label__list[i]
+            except ValueError:
+                pass
+        elif b in a:
+            try:
+                i = label__list.index(b)
+                del label__list[i]
+            except ValueError:
+                pass
+        elif ratio >= 70:
+            
+        #Removes overlapping labels based on similarity
+    return label__list
 
 def train_data(ldata):
     """
