@@ -62,6 +62,7 @@ def load_diagnostic_data(df,dcolumn,lcolumn):
         #Conditional statements for the fields provided
         if ',' in label__str: #There are multiple labels in a field.
             label__list = label__str.split(',') #Work on this portion to apply the load_diagnostic_data function in a general sense (i.e single label vs multiple labels)
+            label__list = remove_duplicate_labels(label__list)
             for label in label__list:
                 label = label.lower()
                 label = label.strip()
@@ -162,8 +163,12 @@ def remove_duplicate_labels(label__list):
             except ValueError:
                 pass
         elif ratio >= 70:
-            
-        #Removes overlapping labels based on similarity
+            if len(a) > len(b): #Removes overlapping labels based on similarity
+                i = label__list.index(b)
+                del label__list[i]
+            elif len(a) < len(b):
+                i = label__list.index(a)
+                del label__list[i]
     return label__list
 
 def train_data(ldata):
