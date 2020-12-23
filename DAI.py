@@ -19,19 +19,6 @@ def main():
     df__transcriptions = df__transcriptions.dropna(axis=0, how='any', subset=['transcription', 'keywords'])
     df__transcriptions.reset_index(drop=True)
     ldata = load_diagnostic_data(df__transcriptions, 'transcription','keywords') #Use EntityRuler to remove overlapping information.
-    nlp = sp.load('en_core_web_sm')
-    spans = []
-    for sample in tqdm(ldata, desc='Extracting Samples'):
-        sample__dict = sample[1]
-        entities = sample__dict['entities']
-        for ent in entities:
-            start = 0
-            end = len(ent) - 1
-            doc = nlp(ent[2])
-            span = doc[start:end]
-            spans.append(span)
-    fspans = filter_spans(spans)
-    print(fspans)
     #nlp__DAI = train_data(ldata)
     #Extract data into a sample file for reviewing
     #with open(r'C:\Users\Benjamin\Documents\Programming\Github\MLpython\training_datav4.txt', 'w') as file:
@@ -40,6 +27,33 @@ def main():
     #    file.close()
     #return nlp
 
+def isinrange(value, low, high):
+    """
+    Checks if Integer is In Range
+    -----------------------------
+    Desc: Function evaluates whether the value is within the low-high range.
+    
+    Parameters:
+    value (int): Integer value that is being compared
+    low (int): Low end of the range
+    high (int): High end of the range.
+    """
+    #Error Handling
+    if not isinstance(value, int):
+        raise TypeError(f'dcolumn must be a string, but is a {type(value)}')
+    if not isinstance(low, int):
+        raise TypeError(f'low must be an integer, but is a {type(low)}')
+    if not isinstance(high, int):
+        raise TypeError(f'high must be an integer, but is a {type(high)}')
+    if low >= high:
+        raise RangeError(f'Lowest number in range must be low and highest number in range must be high.')
+    if value <= low or value >= high:
+        raise ValueError(f'value {value} is outside of the range {low}-{high}')
+    #Conditional Statement
+    if low <= value <= high:
+        return True
+    else:
+        return False
 
 def load_diagnostic_data(df,dcolumn,lcolumn):
     """
@@ -191,33 +205,10 @@ def remove_duplicate_labels(label__list):
                     pass
     return label__list
 
-def filter_spans(spans): 
-    """Filter a sequence of spans and remove duplicates or overlaps. Useful for 
-    creating named entities (where one token can only be part of one entity) or 
-    when merging spans with `Retokenizer.merge`. When spans overlap, the (first) 
-    longest span is preferred over shorter spans. 
-    Parameter:
-    ----------
-    spans (list): The spans to filter. 
-    RETURNS (list): The filtered spans. 
-    """ 
-    get_sort_key = lambda span: (span.end - span.start, span.start) 
-    sorted_spans = sorted(spans, key=get_sort_key, reverse=True) 
-    result = [] 
-    seen_tokens = set() 
-    for span in sorted_spans: 
-        # Check for end - 1 here because boundaries are inclusive 
-        if span.start not in seen_tokens and span.end - 1 not in seen_tokens: 
-            result.append(span) 
-        seen_tokens.update(range(span.start, span.end)) 
-    result = sorted(result, key=lambda span: span.start) 
-    return result
-
 def train_data(ldata):
     """
     Data Trainer
     ------------
-
     Trains the loaded and parsed data into an nlp.
     
     ParametersL
@@ -257,6 +248,10 @@ def train_data(ldata):
                 )
     return nlp
 
+
+#%%Error Handling
+class RangeError(ValueError):
+    pass
 
 if __name__ == "__main__":
     main()
