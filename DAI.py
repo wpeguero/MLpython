@@ -12,6 +12,7 @@ import spacy as sp
 import itertools
 import warnings
 import random
+import tqdm
 
 def main():
     #%% Load DataFrame
@@ -19,13 +20,23 @@ def main():
     df__transcriptions = df__transcriptions.dropna(axis=0, how='any', subset=['transcription', 'keywords'])
     df__transcriptions.reset_index(drop=True)
     ldata = load_diagnostic_data(df__transcriptions, 'transcription','keywords') #Use EntityRuler to remove overlapping information.
-    nlp = train_data(ldata)
+    nlp = sp.load('en_core_web_sm')
+    spans = []
+    for sample in tqdm.tqdm(ldata):
+        sample__dict = sample[1]
+        entities = sample__dict['entities']
+        for ent in entities:
+            doc = nlp(ent[2])
+            span = doc[1:-1]
+            spans.append(span)
+    print(spans)
+    #nlp__DAI = train_data(ldata)
     #Extract data into a sample file for reviewing
     #with open(r'C:\Users\Benjamin\Documents\Programming\Github\MLpython\training_datav4.txt', 'w') as file:
     #    text_train = str(train_data)
     #    file.write(text_train)
     #    file.close()
-    return nlp
+    #return nlp
 
 
 def load_diagnostic_data(df,dcolumn,lcolumn):
@@ -35,7 +46,6 @@ def load_diagnostic_data(df,dcolumn,lcolumn):
     Function that extracts labels from a body of text based on the keywords provided on a separate field.
     
     Sample training data format:
-    
     train_data = [
     ("Uber blew through $1 million a week", [(0, 4, 'ORG')]),
     ("Android Pay expands to Canada", [(0, 11, 'PRODUCT'), (23, 30, 'GPE')]),
@@ -43,6 +53,11 @@ def load_diagnostic_data(df,dcolumn,lcolumn):
     ("Google Maps launches location sharing", [(0, 11, "PRODUCT")]),
     ("Google rebrands its business apps", [(0, 6, "ORG")]),
     ("look what i found on google! 😂", [(21, 27, "PRODUCT")])]
+    
+    Parameters:
+    df (DataFrame): Pandas dataframe with the raw unlabeled data and related labels.
+    dcolumn (str): Column containing the raw data.
+    lcolumn (str): Column containing all of the labels.
     """
     #Deal with bad inputs
     if not isinstance(dcolumn, str):
@@ -167,13 +182,44 @@ def remove_duplicate_labels(label__list):
                 i = label__list.index(b)
                 del label__list[i]
             elif len(a) < len(b):
-                i = label__list.index(a)
-                del label__list[i]
+                try:
+                    i = label__list.index(a)
+                    del label__list[i]
+                except ValueError:
+                    pass
     return label__list
+
+def filter_spans(spans): 
+    """Filter a sequence of spans and remove duplicates or overlaps. Useful for 
+    creating named entities (where one token can only be part of one entity) or 
+    when merging spans with `Retokenizer.merge`. When spans overlap, the (first) 
+    longest span is preferred over shorter spans. 
+    Parameter:
+    ----------
+    spans (list): The spans to filter. 
+    RETURNS (list): The filtered spans. 
+    """ 
+    get_sort_key = lambda span: (span.end - span.start, span.start) 
+    sorted_spans = sorted(spans, key=get_sort_key, reverse=True) 
+    result = [] 
+    seen_tokens = set() 
+    for span in sorted_spans: 
+        # Check for end - 1 here because boundaries are inclusive 
+        if span.start not in seen_tokens and span.end - 1 not in seen_tokens: 
+            result.append(span) 
+        seen_tokens.update(range(span.start, span.end)) 
+    result = sorted(result, key=lambda span: span.start) 
+    return result
 
 def train_data(ldata):
     """
+    Data Trainer
+    ------------
+
     Trains the loaded and parsed data into an nlp.
+    
+    ParametersL
+    ldata (list): contains labeled data in the spacy format.
     """
     nlp = sp.blank('en')
     ner = nlp.create_pipe('ner')
@@ -215,5 +261,5 @@ def train_data(ldata):
 
 
 if __name__ == "__main__":
-    nlp = main()
-    nlp.to_disk(r'C:\Users\wpegu\Github\MLpython\DAIvB1')
+    main()
+    #nlp.to_disk(r'C:\Users\wpegu\Github\MLpython\DAIvB1')
