@@ -5,14 +5,13 @@ Diagnostic Artificial Intelligence, or DAI, is a program that will provide diagn
 2. ImagingDiagnosis
 """
 from spacy.util import compounding, minibatch
-from alive_progress import alive_bar
 from rapidfuzz import fuzz
+from tqdm import tqdm
 import pandas as pd
 import spacy as sp
 import itertools
 import warnings
 import random
-import tqdm
 
 def main():
     #%% Load DataFrame
@@ -22,14 +21,17 @@ def main():
     ldata = load_diagnostic_data(df__transcriptions, 'transcription','keywords') #Use EntityRuler to remove overlapping information.
     nlp = sp.load('en_core_web_sm')
     spans = []
-    for sample in tqdm.tqdm(ldata):
+    for sample in tqdm(ldata, desc='Extracting Samples'):
         sample__dict = sample[1]
         entities = sample__dict['entities']
         for ent in entities:
+            start = 0
+            end = len(ent) - 1
             doc = nlp(ent[2])
-            span = doc[1:-1]
+            span = doc[start:end]
             spans.append(span)
-    print(spans)
+    fspans = filter_spans(spans)
+    print(fspans)
     #nlp__DAI = train_data(ldata)
     #Extract data into a sample file for reviewing
     #with open(r'C:\Users\Benjamin\Documents\Programming\Github\MLpython\training_datav4.txt', 'w') as file:
@@ -224,11 +226,9 @@ def train_data(ldata):
     nlp = sp.blank('en')
     ner = nlp.create_pipe('ner')
     nlp.add_pipe(ner, last=True)
-    with alive_bar(len(ldata)) as bar:
-        for _,annotations in ldata:
-            for ent in annotations.get('entities'):
-                ner.add_label(ent [2])
-            bar.text('extracting entities.')
+    for _,annotations in tqdm(ldata, desc='Annotating Data.'):
+        for ent in annotations.get('entities'):
+            ner.add_label(ent [2])
     ##
     # Disable unneeded pipes.
     ##
@@ -242,21 +242,19 @@ def train_data(ldata):
         #Reset and initialize the weights randomly.
         nlp.begin_training()
         n_iter = 30
-        with alive_bar(n_iter) as bar:
-            for itn in range(n_iter):
-                random.shuffle(ldata)
-                losses = {}
-                #batch up the examples using spacys minibatch
-                batches = minibatch(ldata, size=compounding(4.0, 32.0, 1.001))
-                for batch in batches:
-                    texts, annotations = zip(*batch)
-                    nlp.update(
-                        texts,
-                        annotations,
-                        drop= 0.3,
-                        losses = losses
-                    )
-                bar.text("training the data. Iteration {}".format(itn))
+        for itn in tqdm(range(n_iter), desc='Iterating'):
+            random.shuffle(ldata)
+            losses = {}
+            #batch up the examples using spacys minibatch
+            batches = minibatch(ldata, size=compounding(4.0, 32.0, 1.001))
+            for batch in tqdm(batches, desc='Loading Batches', leave=False):
+                texts, annotations = zip(*batch)
+                nlp.update(
+                    texts,
+                    annotations,
+                    drop= 0.3,
+                    losses = losses
+                )
     return nlp
 
 
