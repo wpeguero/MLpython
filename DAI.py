@@ -1,15 +1,13 @@
 """PROJECT: DAI
 Diagnostic Artificial Intelligence, or DAI, is a program that will provide diagnoses based on the information provided for it, be it an image or an transcription.
 1. DescriptionDiagnosis - Provides a diagnosis based on the description provided by extracting keywords in the description and categorizing it under a medical specialty and sample name.
-
 2. ImagingDiagnosis
 """
 from spacy.util import compounding, minibatch
-from rapidfuzz import fuzz
+from spformat import *
 from tqdm import tqdm
 import pandas as pd
 import spacy as sp
-import itertools
 import warnings
 import random
 
@@ -19,6 +17,7 @@ def main():
     df__transcriptions = df__transcriptions.dropna(axis=0, how='any', subset=['transcription', 'keywords'])
     df__transcriptions.reset_index(drop=True)
     ldata = load_diagnostic_data(df__transcriptions, 'transcription','keywords') #Use EntityRuler to remove overlapping information.
+    print(ldata[0])
     #nlp__DAI = train_data(ldata)
     #Extract data into a sample file for reviewing
     #with open(r'C:\Users\Benjamin\Documents\Programming\Github\MLpython\training_datav4.txt', 'w') as file:
@@ -26,34 +25,6 @@ def main():
     #    file.write(text_train)
     #    file.close()
     #return nlp
-
-def isinrange(value, low, high):
-    """
-    Checks if Integer is In Range
-    -----------------------------
-    Desc: Function evaluates whether the value is within the low-high range.
-    
-    Parameters:
-    value (int): Integer value that is being compared
-    low (int): Low end of the range
-    high (int): High end of the range.
-    """
-    #Error Handling
-    if not isinstance(value, int):
-        raise TypeError(f'dcolumn must be a string, but is a {type(value)}')
-    if not isinstance(low, int):
-        raise TypeError(f'low must be an integer, but is a {type(low)}')
-    if not isinstance(high, int):
-        raise TypeError(f'high must be an integer, but is a {type(high)}')
-    if low >= high:
-        raise RangeError(f'Lowest number in range must be low and highest number in range must be high.')
-    if value <= low or value >= high:
-        raise ValueError(f'value {value} is outside of the range {low}-{high}')
-    #Conditional Statement
-    if low <= value <= high:
-        return True
-    else:
-        return False
 
 def load_diagnostic_data(df,dcolumn,lcolumn):
     """
@@ -155,56 +126,6 @@ def __load_specialty_data(df,dcolumn,lcolumn):
         traindata.append(trainsample)
     return traindata
 
-def remove_duplicate_labels(label__list):
-    """Label Cleaner
-    ----------------
-    Removes duplicates in the label lists by comparing whether one item is in another.
-    
-    Parameters:
-    label__list (list): a list filled with labels that will be used to label information.
-    """
-    #Removes empty labels
-    if '' in label__list:
-        i = label__list.index('')
-        del label__list[i]
-    else:
-        pass
-    #Removes labels with '-'.
-    for label in label__list:
-        if '-' in label:
-            i = label__list.index(label)
-            del label__list[i]
-        else:
-            pass
-    #Removes labels that are generalized versions of other labels
-    label__list.sort(key=len)
-    label__list = list(map(lambda it: it.strip(), label__list))
-    for a,b in itertools.combinations(label__list,2):
-        ratio = fuzz.ratio(a,b)
-        if a in b:
-            try:
-                i = label__list.index(a)
-                del label__list[i]
-            except ValueError:
-                pass
-        elif b in a:
-            try:
-                i = label__list.index(b)
-                del label__list[i]
-            except ValueError:
-                pass
-        elif ratio >= 70:
-            if len(a) > len(b): #Removes overlapping labels based on similarity
-                i = label__list.index(b)
-                del label__list[i]
-            elif len(a) < len(b):
-                try:
-                    i = label__list.index(a)
-                    del label__list[i]
-                except ValueError:
-                    pass
-    return label__list
-
 def train_data(ldata):
     """
     Data Trainer
@@ -248,10 +169,6 @@ def train_data(ldata):
                 )
     return nlp
 
-
-#%%Error Handling
-class RangeError(ValueError):
-    pass
 
 if __name__ == "__main__":
     main()
