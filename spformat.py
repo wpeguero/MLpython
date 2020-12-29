@@ -5,6 +5,7 @@ Grabs data from CSV and converts it into a format that can then be utilized to t
 """
 from rapidfuzz import fuzz
 import itertools
+import re
 
 def main():
     pass
@@ -42,6 +43,20 @@ def isinrange(value, low, high):
     else:
         return False
 
+def clean_punctuation(words):
+    """
+    Punctuation Cleaner
+    -------------------
+    Removes off punctuation, such as tabs in words, newlines, spaces in locations where there are not meant to be any, etc.
+    Parameters:
+    words (str) : Set of words or single word that requires modifications in punctuation.
+    """
+    word = words.lower()
+    words = words.strip()
+    words = re.sub(r' {2,}', ' ', words)
+    words = words.replace('\n','').replace('\r', '').replace('\t', '')
+    return words
+
 def remove_duplicate_labels(label__list):
     """Label Cleaner
     ----------------
@@ -56,13 +71,7 @@ def remove_duplicate_labels(label__list):
         del label__list[i]
     else:
         pass
-    #Removes labels with '-'.
-    for label in label__list:
-        if '-' in label:
-            i = label__list.index(label)
-            del label__list[i]
-        else:
-            pass
+    
     #Removes labels that are generalized versions of other labels
     label__list.sort(key=len)
     label__list = list(map(lambda it: it.strip(), label__list))
