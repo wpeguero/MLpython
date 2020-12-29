@@ -77,28 +77,41 @@ def remove_duplicate_labels(label__list):
     label__list = list(map(lambda it: it.strip(), label__list))
     for a,b in itertools.combinations(label__list,2):
         ratio = fuzz.ratio(a,b)
+        a_list = a.split(' ')
+        for a_var in a_list:
+            if a_var in b and len(a) < len(b):
+                i = label__list.index(a)
+                del label__list[i]
+                break
+            elif a_var in b and len(a) > len(b):
+                i = label__list.index(b)
+                del label__list[i]
+                break
+            else:
+                continue
         if a in b:
             try:
                 i = label__list.index(a)
                 del label__list[i]
             except ValueError:
-                pass
+                continue
         elif b in a:
             try:
                 i = label__list.index(b)
                 del label__list[i]
             except ValueError:
-                pass
+                continue
         elif ratio >= 70:
             if len(a) > len(b): #Removes overlapping labels based on similarity
                 i = label__list.index(b)
                 del label__list[i]
+                continue
             elif len(a) < len(b):
                 try:
                     i = label__list.index(a)
                     del label__list[i]
                 except ValueError:
-                    pass
+                    continue
     return label__list
 
 def remove_duplicate_entities(entities__dict):
