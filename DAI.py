@@ -18,7 +18,7 @@ def main():
     df__transcriptions.reset_index(drop=True)
     ldata = load_diagnostic_data(df__transcriptions, 'transcription','keywords') #Use EntityRuler to remove overlapping information.
     print(ldata[0])
-    #nlp__DAI = train_data(ldata)
+    nlp__DAI = train_data(ldata)
     #Extract data into a sample file for reviewing
     #with open(r'C:\Users\Benjamin\Documents\Programming\Github\MLpython\training_datav4.txt', 'w') as file:
     #    text_train = str(train_data)
@@ -138,7 +138,7 @@ def train_data(ldata):
     nlp = sp.blank('en')
     ner = nlp.create_pipe('ner')
     nlp.add_pipe(ner, last=True)
-    for _,annotations in tqdm(ldata, desc='Annotating Data.'):
+    for _,annotations in tqdm(ldata, desc='Annotating Data'):
         for ent in annotations.get('entities'):
             ner.add_label(ent [2])
     ##
