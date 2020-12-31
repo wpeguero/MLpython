@@ -51,11 +51,29 @@ def clean_punctuation(words):
     Parameters:
     words (str) : Set of words or single word that requires modifications in punctuation.
     """
-    word = words.lower()
+    words = words.lower()
     words = words.strip()
     words = re.sub(r' {2,}', ' ', words)
     words = words.replace('\n','').replace('\r', '').replace('\t', '')
     return words
+
+def remove_bad_labels(label__list):
+    """
+    Remove Bad Labels
+    -----------------
+    Function that removes all of the bad labels.
+    Parameters:
+    Label__list (list): A list containing all of the labels for sample data.
+    """
+    if '' in label__list:
+        i = label__list.index('')
+        del label__list[i]
+    elif ' ' in label__list:
+        i = label__list.index(' ')
+        del label__list[i]
+    else:
+        pass
+    return label__list
 
 def remove_duplicate_labels(label__list):
     """Label Cleaner
@@ -110,25 +128,7 @@ def remove_duplicate_labels(label__list):
                     continue
     return label__list
 
-def remove_bad_labels(label__list):
-    """
-    Remove Bad Labels
-    -----------------
-    Function that removes all of the bad labels.
-    Parameters:
-    Label__list (list): A list containing all of the labels for sample data.
-    """
-    if '' in label__list:
-        i = label__list.index('')
-        del label__list[i]
-    elif ' ' in label__list:
-        i = label__list.index(' ')
-        del label__list[i]
-    else:
-        pass
-    return label__list
-
-def remove_duplicate_entities(entities__dict):
+def remove_overlapping_entities(entities__dict):
     """
     Overlapping Entity Remover
     ---------------
@@ -156,7 +156,12 @@ def remove_duplicate_entities(entities__dict):
                 del entities__dict['entities'][i]
                 del entities[i]
         else:
-            pass
+            a__list = a.split(' ')
+            for a_var in a__list:
+                if a_var in b and a_len > b_len:
+                    pass
+                elif a_var in b and a_len < b_len:
+                    pass
     return entities__dict
 
 def load_data(df,dcolumn,lcolumn):
@@ -191,16 +196,14 @@ def load_data(df,dcolumn,lcolumn):
     for index, row in df.iterrows():
         entities__list = []
         label__str = row[str(lcolumn)]
+        label__str = clean_punctuation(label__str)
         sample_text = row[str(dcolumn)]
-        sample_text = sample_text.lower()
-        sample_text = sample_text.strip()
+        sample_text = clean_punctuation(sample_text)
         #Conditional statements for the fields provided
         if ',' in label__str: #There are multiple labels in a field.
             label__list = label__str.split(',') #Work on this portion to apply the load_diagnostic_data function in a general sense (i.e single label vs multiple labels)
             label__list = remove_duplicate_labels(label__list)
             for label in label__list:
-                label = label.lower()
-                label = label.strip()
                 if label in sample_text:
                     start = sample_text.find(label)
                     end = start + len(label)
@@ -220,6 +223,7 @@ def load_data(df,dcolumn,lcolumn):
                 end = len(sample_text)
                 entities = (start, end, label)
             entities__dict = {'entities': [entities]}
+        entities__dict = remove_overlapping_entities(entities__dict)
         trainsample = (row[str(dcolumn)], entities__dict)
         traindata.append(trainsample)
     return traindata
