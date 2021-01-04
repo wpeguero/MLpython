@@ -3,12 +3,17 @@ Spacy Data Formatting Tool
 --------------------------
 Grabs data from CSV and converts it into a format that can then be utilized to train NER using the Spacy module.
 """
+import pandas as pd
 from rapidfuzz import fuzz
 import itertools
+import json
 import re
 
 def main():
-    pass
+    df__transcriptions = pd.read_csv(r'C:\Users\wpegu\Documents\Github\MLpython\Sample_Data\mtsamples.csv')
+    df__transcriptions = df__transcriptions.dropna(axis=0, how='any', subset=['transcription', 'keywords'])
+    df__transcriptions.reset_index(drop=True)
+    ldata = load_data(df__transcriptions, 'transcription','keywords') #Use EntityRuler to remove overlapping information.
 
 
 class RangeError(ValueError):
@@ -35,8 +40,6 @@ def isinrange(value, low, high):
         raise TypeError(f'high must be an integer, but is a {type(high)}')
     if low >= high:
         raise RangeError(f'Lowest number in range must be low and highest number in range must be high.')
-    if value <= low or value >= high:
-        raise ValueError(f'value {value} is outside of the range {low}-{high}')
     #Conditional Statement
     if low <= value <= high:
         return True
@@ -55,6 +58,9 @@ def clean_punctuation(words):
     words = words.strip()
     words = re.sub(r' {2,}', ' ', words)
     words = words.replace('\n','').replace('\r', '').replace('\t', '')
+    for word in words:
+        if word.isalnum() is not True or word != '-':
+            words = words.replace(word, ' ')
     return words
 
 def remove_bad_labels(label__list):
@@ -73,6 +79,7 @@ def remove_bad_labels(label__list):
         del label__list[i]
     else:
         pass
+    
     return label__list
 
 def remove_duplicate_labels(label__list):
@@ -156,7 +163,7 @@ def remove_overlapping_entities(entities__dict):
                 del entities__dict['entities'][i]
                 del entities[i]
         else:
-            a__list = a.split(' ')
+            a__list = a[2].split(' ')
             for a_var in a__list:
                 if a_var in b and a_len > b_len:
                     pass
@@ -206,9 +213,10 @@ def load_data(df,dcolumn,lcolumn):
             for label in label__list:
                 if label in sample_text:
                     start = sample_text.find(label)
-                    end = start + len(label)
-                    entities = (start, end, label)
-                    entities__list.append(entities)
+                    end = start + len(label) - 1
+                    if sample_text[end+1] == ' ' or sample_text[end+1] == '.':
+                        entities = (start, end, label)
+                        entities__list.append(entities)
             entities__dict = {'entities': entities__list}
         else: #There is only one label in the field.
             label = label__str
@@ -226,6 +234,8 @@ def load_data(df,dcolumn,lcolumn):
         entities__dict = remove_overlapping_entities(entities__dict)
         trainsample = (row[str(dcolumn)], entities__dict)
         traindata.append(trainsample)
+    with open('mtsamplesdata.json', 'w', encoding='utf-8') as f:
+        y = json.dump(traindata, f, ensure_ascii=False, indent=4)
     return traindata
 
 
