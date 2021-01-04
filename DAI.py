@@ -13,11 +13,11 @@ import random
 
 def main():
     #%% Load DataFrame
-    df__transcriptions = pd.read_csv(r'D:\Users\wpeguerorosario\Documents\Github\MLpython\Sample_Data\mtsamples.csv')
+    df__transcriptions = pd.read_csv(r'C:\Users\wpegu\Documents\Github\MLpython\Sample_Data\mtsamples.csv')
     df__transcriptions = df__transcriptions.dropna(axis=0, how='any', subset=['transcription', 'keywords'])
     df__transcriptions.reset_index(drop=True)
     ldata = load_data(df__transcriptions, 'transcription','keywords') #Use EntityRuler to remove overlapping information.
-    print(ldata[0])
+    #print(ldata[0])
     nlp__DAI = train_data(ldata)
     #Extract data into a sample file for reviewing
     #with open(r'C:\Users\Benjamin\Documents\Programming\Github\MLpython\training_datav4.txt', 'w') as file:
@@ -68,7 +68,7 @@ def train_data(ldata):
     ------------
     Trains the loaded and parsed data into an nlp.
     
-    ParametersL
+    Parameters:
     ldata (list): contains labeled data in the spacy format.
     """
     nlp = sp.blank('en')
@@ -100,9 +100,10 @@ def train_data(ldata):
                 nlp.update(
                     texts,
                     annotations,
-                    drop= 0.3,
+                    drop= 0.15,
                     losses = losses
                 )
+            print("losses", (losses['ner']/len(train_data)) * 100)
     return nlp
 
 
