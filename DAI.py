@@ -24,7 +24,7 @@ def main():
     #    text_train = str(train_data)
     #    file.write(text_train)
     #    file.close()
-    #return nlp
+    return nlp__DAI
 
 
 def __load_specialty_data(df,dcolumn,lcolumn):
@@ -90,23 +90,23 @@ def train_data(ldata):
         #Reset and initialize the weights randomly.
         nlp.begin_training()
         n_iter = 30
-        for itn in tqdm(range(n_iter), desc='Iterating'):
+        for itn in range(n_iter):
             random.shuffle(ldata)
             losses = {}
             #batch up the examples using spacys minibatch
             batches = minibatch(ldata, size=compounding(4.0, 32.0, 1.001))
-            for batch in tqdm(batches, desc='Loading Batches', leave=False):
+            for batch in batches:
                 texts, annotations = zip(*batch)
                 nlp.update(
                     texts,
                     annotations,
-                    drop= 0.15,
+                    drop= 0.25,
                     losses = losses
                 )
-            print("losses", (losses['ner']/len(train_data)) * 100)
+                print("losses: ", (losses['ner']/len(ldata)) * 100, '\nLost: ', losses, '\n')
     return nlp
 
 
 if __name__ == "__main__":
-    main()
-    #nlp.to_disk(r'C:\Users\wpegu\Github\MLpython\DAIvB1')
+    nlp = main()
+    nlp.to_disk(r'C:\Users\wpegu\Documents\Github\MLpython\DAIvB1')
