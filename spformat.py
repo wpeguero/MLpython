@@ -3,10 +3,15 @@ Spacy Data Formatting Tool
 --------------------------
 Grabs data from CSV and converts it into a format that can then be utilized to train NER using the Spacy module.
 """
-import pandas as pd
+from spacy.util import compounding, minibatch
 from rapidfuzz import fuzz
+import pandas as pd
+import spacy as sp
 import itertools
+import warnings
+import random
 import json
+import tqdm
 import re
 
 def main():
@@ -238,6 +243,49 @@ def load_data(df,dcolumn,lcolumn):
         y = json.dump(traindata, f, ensure_ascii=False, indent=4)
     return traindata
 
+def train_data(ldata):
+    """
+    Data Trainer
+    ------------
+    Trains the loaded and parsed data into an nlp.
+    
+    Parameters:
+    ldata (list): contains labeled data in the spacy format.
+    """
+    nlp = sp.blank('en')
+    ner = nlp.create_pipe('ner')
+    nlp.add_pipe(ner, last=True)
+    for _,annotations in tqdm(ldata, desc='Annotating Data'):
+        for ent in annotations.get('entities'):
+            ner.add_label(ent [2])
+    ##
+    # Disable unneeded pipes.
+    ##
+    pipe_exceptions = ['ner', 'trf_wordpiecer', 'trf_tok2vec']
+    other_pipes = [pipe for pipe in nlp.pipe_names if pipe not in pipe_exceptions]
+    ##
+    # Train the ner pipe only
+    ##
+    with nlp.disable_pipes(*other_pipes), warnings.catch_warnings():
+        warnings.filterwarnings("once", category=UserWarning, module='spacy')
+        #Reset and initialize the weights randomly.
+        nlp.begin_training()
+        n_iter = 30
+        for itn in range(n_iter):
+            random.shuffle(ldata)
+            losses = {}
+            #batch up the examples using spacys minibatch
+            batches = minibatch(ldata, size=compounding(4.0, 32.0, 1.001))
+            for batch in batches:
+                texts, annotations = zip(*batch)
+                nlp.update(
+                    texts,
+                    annotations,
+                    drop= 0.25,
+                    losses = losses
+                )
+                print("losses: ", (losses['ner']/len(ldata)) * 100, '\nLost: ', losses, '\n')
+    return nlp
 
 if __name__ == "__main__":
     main()
