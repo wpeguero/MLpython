@@ -1,6 +1,4 @@
 *.pyc
 sample.csv
-Sample_Data/
-PracticeSQL/
+Sample_Data/eye_images_dataset
 *.json
-
