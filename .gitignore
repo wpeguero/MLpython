@@ -1,4 +1,6 @@
 *.pyc
 sample.csv
-/Sample_Data/Medical_Imaging
-/Sample_Data/mtsamples.csv
+Sample_Data/
+PracticeSQL/
+*.json
+
