@@ -6,34 +6,12 @@ import os
 def main():
     """Creates visuals for data that provide better insight as to what information the data can provide."""
     #%%Load the information
-    path_to_file = os.path.abspath('Sample_Data/estimated_inpatient_all_20200921_0928.csv')
-    df__estimated_inpatient = pd.read_csv(path_to_file)
+    path_to_file = os.path.abspath('Sample_Data/Breast Cancer Diagnostic (Wisconsin).csv')
+    df__diabetics = pd.read_csv(path_to_file)
     #/mnt/c/Users/Wpeguero/Documents/GitHub/MLpython/Sample_Data/estimated_inpatient_all_20200921_0928.csv
-    #%% Clean the Data
-    datatype = {
-        'state': 'category',
-        'Inpatient Beds Occupied Estimated': 'int',
-        'Count LL': 'int',
-        'Count UL': 'int',
-        'Percentage of Inpatient Beds Occupied Estimated': 'float',
-        'Percentage LL': 'float',
-        'Percentage UL': 'float',
-        'Total Inpatient Beds': 'int',
-        'Total LL': 'int',
-        'Total UL': 'int'
-    }
-    df__estimated_inpatient = df__estimated_inpatient.replace(',','',regex=True)
-    df__estimated_inpatient = df__estimated_inpatient.astype(datatype)
-    df__estimated_inpatient = df__estimated_inpatient.drop(df__estimated_inpatient[df__estimated_inpatient['state'] == 'CW'].index, inplace=True)
-    #%%Plot the Data
-    fig = plt.figure(figsize=(20,10))
-    fig.suptitle('Estimation of Inpatient Beds Occupied by State')
-    ax1 = sns.barplot(x='state',y='Inpatient Beds Occupied Estimated', data=df__estimated_inpatient)
-    try:
-        plt.show(ax1)
-    except TypeError as e:
-        fig = ax1.get_figure()
-        fig.savefig('/Sample_Data/Estimation of Inpatient Beds Occupied by State.png')
+    columns = df__diabetics.columns
+    columns = columns.tolist()
+    print(columns)
 
 
 def extract_groups(df, group_variable):
@@ -55,10 +33,6 @@ def avg_col_value(dict_groups, col):
         state = key[-2] + key[-1]
         dict__averages['{}'.format(state)] = avg
     return dict__averages
-
-def clean_data(df):
-    """Converts numerical data into proper format, as well as remove any unwanted characters."""
-    pass
 
 
 if __name__ == "__main__":
