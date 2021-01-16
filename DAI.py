@@ -3,28 +3,23 @@ Diagnostic Artificial Intelligence, or DAI, is a program that will provide diagn
 1. DescriptionDiagnosis - Provides a diagnosis based on the description provided by extracting keywords in the description and categorizing it under a medical specialty and sample name.
 2. ImagingDiagnosis
 """
-from spacy.util import compounding, minibatch
 from spformat import *
-from tqdm import tqdm
 import pandas as pd
-import spacy as sp
-import warnings
-import random
 
 def main():
     #%% Load DataFrame
-    df__transcriptions = pd.read_csv(r'C:\Users\wpegu\Documents\Github\MLpython\Sample_Data\mtsamples.csv')
+    df__transcriptions = pd.read_csv(r'C:\Users\wpegu\Documents\Github\MLpython\Sample_Data\mtsamples_train__test.csv')
     df__transcriptions = df__transcriptions.dropna(axis=0, how='any', subset=['transcription', 'keywords'])
     df__transcriptions.reset_index(drop=True)
-    ldata = load_data(df__transcriptions, 'transcription','keywords') #Use EntityRuler to remove overlapping information.
+    ldata = load_data(df__transcriptions, 'transcription','keywords') #May need to create a dataframe that contains 1 label per column.
     #print(ldata[0])
-    nlp__DAI = train_data(ldata)
+    nlp = train_data(ldata)
     #Extract data into a sample file for reviewing
     #with open(r'C:\Users\Benjamin\Documents\Programming\Github\MLpython\training_datav4.txt', 'w') as file:
     #    text_train = str(train_data)
     #    file.write(text_train)
     #    file.close()
-    return nlp__DAI
+    return nlp
 
 
 def __load_specialty_data(df,dcolumn,lcolumn):
@@ -62,51 +57,7 @@ def __load_specialty_data(df,dcolumn,lcolumn):
         traindata.append(trainsample)
     return traindata
 
-def train_data(ldata):
-    """
-    Data Trainer
-    ------------
-    Trains the loaded and parsed data into an nlp.
-    
-    Parameters:
-    ldata (list): contains labeled data in the spacy format.
-    """
-    nlp = sp.blank('en')
-    ner = nlp.create_pipe('ner')
-    nlp.add_pipe(ner, last=True)
-    for _,annotations in tqdm(ldata, desc='Annotating Data'):
-        for ent in annotations.get('entities'):
-            ner.add_label(ent [2])
-    ##
-    # Disable unneeded pipes.
-    ##
-    pipe_exceptions = ['ner', 'trf_wordpiecer', 'trf_tok2vec']
-    other_pipes = [pipe for pipe in nlp.pipe_names if pipe not in pipe_exceptions]
-    ##
-    # Train the ner pipe only
-    ##
-    with nlp.disable_pipes(*other_pipes), warnings.catch_warnings():
-        warnings.filterwarnings("once", category=UserWarning, module='spacy')
-        #Reset and initialize the weights randomly.
-        nlp.begin_training()
-        n_iter = 30
-        for itn in range(n_iter):
-            random.shuffle(ldata)
-            losses = {}
-            #batch up the examples using spacys minibatch
-            batches = minibatch(ldata, size=compounding(4.0, 32.0, 1.001))
-            for batch in batches:
-                texts, annotations = zip(*batch)
-                nlp.update(
-                    texts,
-                    annotations,
-                    drop= 0.25,
-                    losses = losses
-                )
-                print("losses: ", (losses['ner']/len(ldata)) * 100, '\nLost: ', losses, '\n')
-    return nlp
-
 
 if __name__ == "__main__":
     nlp = main()
-    nlp.to_disk(r'C:\Users\wpegu\Documents\Github\MLpython\DAIvB1')
+    nlp.to_disk(r'C:\Users\wpegu\Documents\Github\MLpython\mtner')
