@@ -4,9 +4,12 @@ Spacy Data Formatting Tool
 Grabs data from CSV and converts it into a format that can then be utilized to train NER using the Spacy module.
 """
 from spacy.util import compounding, minibatch
+from spacy.gold import GoldParse
+from spacy.scorer import Scorer
+import matplotlib.pyplot as plt
+from spacy import blank, load
 from rapidfuzz import fuzz
 import pandas as pd
-import spacy as sp
 import itertools
 import warnings
 import random
@@ -18,12 +21,21 @@ def main():
     df__transcriptions = pd.read_csv(r'C:\Users\wpegu\Documents\Github\MLpython\Sample_Data\mtsamples.csv')
     df__transcriptions = df__transcriptions.dropna(axis=0, how='any', subset=['transcription', 'keywords'])
     df__transcriptions.reset_index(drop=True)
-    ldata = load_data(df__transcriptions, 'transcription','keywords') #Use EntityRuler to remove overlapping information.
+    tdata = load_data(df__transcriptions, 'transcription', 'keywords')
+    nlp = train_data(tdata)
+    nlp.to_disk(r'C:\Users\wpegu\Documents\Github\MLpython\mtner')
 
 
 class RangeError(ValueError):
     pass
 
+
+def evaluate(nlp, examples):
+    """
+    Scores the accuracy of the nlp model
+    ------------------------------------
+    """
+    scorer = Scorer()
 
 def isinrange(value, low, high):
     """
@@ -65,7 +77,7 @@ def clean_punctuation(words):
     words = words.replace('\n','').replace('\r', '').replace('\t', '')
     for word in words:
         if word.isalnum() is not True or word != '-':
-            words = words.replace(word, ' ')
+            word = word.replace(word, ' ')
     return words
 
 def remove_bad_labels(label__list):
@@ -252,7 +264,7 @@ def train_data(ldata):
     Parameters:
     ldata (list): contains labeled data in the spacy format.
     """
-    nlp = sp.blank('en')
+    nlp = blank('en')
     ner = nlp.create_pipe('ner')
     nlp.add_pipe(ner, last=True)
     for _,annotations in tqdm(ldata, desc='Annotating Data'):
@@ -271,6 +283,11 @@ def train_data(ldata):
         #Reset and initialize the weights randomly.
         nlp.begin_training()
         n_iter = 30
+        x = 0
+        b_iter = []
+        losses_list = []
+        fig = plt.figure()
+        ax1 = fig.add_subplot(1, 1, 1)
         for itn in range(n_iter):
             random.shuffle(ldata)
             losses = {}
@@ -281,11 +298,18 @@ def train_data(ldata):
                 nlp.update(
                     texts,
                     annotations,
-                    drop= 0.25,
+                    drop= 0.4,
                     losses = losses
                 )
                 print("losses: ", (losses['ner']/len(ldata)) * 100, '\nLost: ', losses, '\n')
+                x += 1
+                b_iter.append(x)
+                losses_list.append(( losses['ner'] / len(ldata) ) * 100)
+                ax1.clear()
+                ax1.plot(b_iter, losses_list)
+                plt.pause(.00001)
     return nlp
+
 
 if __name__ == "__main__":
     main()
