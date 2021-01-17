@@ -9,6 +9,7 @@ from spacy.scorer import Scorer
 import matplotlib.pyplot as plt
 from spacy import blank, load
 from rapidfuzz import fuzz
+from tqdm import tqdm
 import pandas as pd
 import itertools
 import warnings
@@ -21,9 +22,12 @@ def main():
     df__transcriptions = pd.read_csv(r'C:\Users\wpegu\Documents\Github\MLpython\Sample_Data\mtsamples.csv')
     df__transcriptions = df__transcriptions.dropna(axis=0, how='any', subset=['transcription', 'keywords'])
     df__transcriptions.reset_index(drop=True)
-    tdata = load_data(df__transcriptions, 'transcription', 'keywords')
-    nlp = train_data(tdata)
-    nlp.to_disk(r'C:\Users\wpegu\Documents\Github\MLpython\mtner')
+    transcriptions = df__transcriptions['transcription']
+    transcriptions = transcriptions.tolist()
+    nlp = load(r'C:\Users\wpegu\Documents\Github\MLpython\mtner')
+    for transcription in transcriptions:
+        doc = nlp(transcription)
+        print(doc.ents)
 
 
 class RangeError(ValueError):
@@ -73,11 +77,17 @@ def clean_punctuation(words):
     """
     words = words.lower()
     words = words.strip()
-    words = re.sub(r' {2,}', ' ', words)
-    words = words.replace('\n','').replace('\r', '').replace('\t', '')
+    words = words.replace('\n','')
+    words = words.replace('\r', '')
+    words = words.replace('\t', '')
+    words = words.replace(' ,', ', ')
+    words = words.replace(',', ', ')
+    words = words.replace(':', '')
+    words = words.replace('.', '')
     for word in words:
         if word.isalnum() is not True or word != '-':
             word = word.replace(word, ' ')
+    words = re.sub(r' {2,}', ' ', words)
     return words
 
 def remove_bad_labels(label__list):
@@ -171,14 +181,15 @@ def remove_overlapping_entities(entities__dict):
         b_len = len(b[2])
         #See if  a and b overlap
         if isinrange(a_high, b_low, b_high) or isinrange(b_low, a_low, a_high) or isinrange(b_high, a_low, a_high) or isinrange(a_low, b_low, b_high):
-            if a_len > b_len:
-                i = entities.index(b)
-                del entities__dict['entities'][i]
-                del entities[i]
-            elif a_len < b_len:
-                i = entities.index(a)
-                del entities__dict['entities'][i]
-                del entities[i]
+            try:
+                if a_len >= b_len:
+                    i = entities.index(b)
+                    del entities__dict['entities'][i]
+                elif a_len < b_len:
+                    i = entities.index(a)
+                    del entities__dict['entities'][i]
+            except IndexError:
+                print('a: ', a, '\nb: ', b, '\na_len: ', a_len, '\nb_len: ', b_len)
         else:
             a__list = a[2].split(' ')
             for a_var in a__list:
@@ -231,9 +242,8 @@ def load_data(df,dcolumn,lcolumn):
                 if label in sample_text:
                     start = sample_text.find(label)
                     end = start + len(label) - 1
-                    if sample_text[end+1] == ' ' or sample_text[end+1] == '.':
-                        entities = (start, end, label)
-                        entities__list.append(entities)
+                    entities = (start, end, label)
+                    entities__list.append(entities)
             entities__dict = {'entities': entities__list}
         else: #There is only one label in the field.
             label = label__str
@@ -241,15 +251,15 @@ def load_data(df,dcolumn,lcolumn):
             label = label.strip()
             if label in sample_text:
                 start = sample_text.find(label)
-                end = start + len(label)
+                end = start + len(label) - 1
                 entities = (start, end, label)
             else:
                 start = 0
-                end = len(sample_text)
+                end = len(sample_text) - 1
                 entities = (start, end, label)
             entities__dict = {'entities': [entities]}
         entities__dict = remove_overlapping_entities(entities__dict)
-        trainsample = (row[str(dcolumn)], entities__dict)
+        trainsample = (sample_text, entities__dict)
         traindata.append(trainsample)
     with open('mtsamplesdata.json', 'w', encoding='utf-8') as f:
         y = json.dump(traindata, f, ensure_ascii=False, indent=4)
@@ -267,7 +277,7 @@ def train_data(ldata):
     nlp = blank('en')
     ner = nlp.create_pipe('ner')
     nlp.add_pipe(ner, last=True)
-    for _,annotations in tqdm(ldata, desc='Annotating Data'):
+    for _,annotations in ldata:
         for ent in annotations.get('entities'):
             ner.add_label(ent [2])
     ##
@@ -278,6 +288,7 @@ def train_data(ldata):
     ##
     # Train the ner pipe only
     ##
+    nlp.Defaults.stop_words.remove("'s")
     with nlp.disable_pipes(*other_pipes), warnings.catch_warnings():
         warnings.filterwarnings("once", category=UserWarning, module='spacy')
         #Reset and initialize the weights randomly.
@@ -305,9 +316,9 @@ def train_data(ldata):
                 x += 1
                 b_iter.append(x)
                 losses_list.append(( losses['ner'] / len(ldata) ) * 100)
-                ax1.clear()
-                ax1.plot(b_iter, losses_list)
-                plt.pause(.00001)
+                #ax1.clear()
+                #ax1.plot(b_iter, losses_list)
+                #plt.pause(.001)
     return nlp
 
 
