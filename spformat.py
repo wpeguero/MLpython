@@ -19,16 +19,12 @@ import tqdm
 import re
 
 def main():
-    df__transcriptions = pd.read_csv(r'C:\Users\wpegu\Documents\Github\MLpython\Sample_Data\mtsamples.csv')
+    df__transcriptions = pd.read_csv(r'C:\Users\wpegu\Documents\Github\MLpython\Sample_Data\mtsamples_train__test.csv')
     df__transcriptions = df__transcriptions.dropna(axis=0, how='any', subset=['transcription', 'keywords'])
     df__transcriptions.reset_index(drop=True)
-    transcriptions = df__transcriptions['transcription']
-    transcriptions = transcriptions.tolist()
-    nlp = load(r'C:\Users\wpegu\Documents\Github\MLpython\mtner')
-    for transcription in transcriptions:
-        doc = nlp(transcription)
-        print(doc.ents)
-
+    ldata = load_data(df__transcriptions, 'transcription','keywords')
+    df_spata = create_dataframe(ldata)
+    df_spata.to_csv(r'test.csv')
 
 class RangeError(ValueError):
     pass
@@ -75,18 +71,20 @@ def clean_punctuation(words):
     Parameters:
     words (str) : Set of words or single word that requires modifications in punctuation.
     """
+    words = str(words)
     words = words.lower()
     words = words.strip()
     words = words.replace('\n','')
     words = words.replace('\r', '')
     words = words.replace('\t', '')
-    words = words.replace(' ,', ', ')
     words = words.replace(',', ', ')
     words = words.replace(':', '')
-    words = words.replace('.', '')
     for word in words:
         if word.isalnum() is not True or word != '-':
-            word = word.replace(word, ' ')
+            word = word.replace(word, '')
+    words = words.replace(' ,', ', ')
+    words = words.replace(', , ', ',')
+    words = words.replace('.,', '.')
     words = re.sub(r' {2,}', ' ', words)
     return words
 
@@ -105,8 +103,10 @@ def remove_bad_labels(label__list):
         i = label__list.index(' ')
         del label__list[i]
     else:
-        pass
-    
+        for label in label__list:
+            if '-' in label:
+                i = label__list.index(label)
+                del label__list[i]
     return label__list
 
 def remove_duplicate_labels(label__list):
@@ -279,7 +279,7 @@ def train_data(ldata):
     nlp.add_pipe(ner, last=True)
     for _,annotations in ldata:
         for ent in annotations.get('entities'):
-            ner.add_label(ent [2])
+            ner.add_label(ent[2])
     ##
     # Disable unneeded pipes.
     ##
@@ -320,6 +320,23 @@ def train_data(ldata):
                 #ax1.plot(b_iter, losses_list)
                 #plt.pause(.001)
     return nlp
+
+def create_dataframe(ldata):
+    """Creates dataframe from ldata."""
+    spdata__list = []
+    for sample in ldata:
+        spdata__dict = {}
+        entities = sample[1]['entities']
+        transcription = sample[0]
+        spdata__dict['sample_string'] = transcription
+        spdata__dict['entities'] = entities
+        for entity in entities:
+            label = entity[2]
+            i = entities.index(entity)
+            spdata__dict[str('label' + str(i))] = label
+        spdata__list.append(spdata__dict)
+    df = pd.DataFrame(spdata__list)
+    return df
 
 
 if __name__ == "__main__":
