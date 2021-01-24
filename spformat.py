@@ -22,9 +22,24 @@ def main():
     df__transcriptions = pd.read_csv(r'C:\Users\wpegu\Documents\Github\MLpython\Sample_Data\mtsamples_train__test.csv')
     df__transcriptions = df__transcriptions.dropna(axis=0, how='any', subset=['transcription', 'keywords'])
     df__transcriptions.reset_index(drop=True)
-    ldata = load_data(df__transcriptions, 'transcription','keywords')
+    ldata, _labels = load_data(df__transcriptions, 'transcription','keywords')
     df_spata = create_dataframe(ldata)
-    df_spata.to_csv(r'test.csv')
+    #df_spata.to_csv(r'data in spacy format.csv')
+    fdups = []
+    for label in _labels:
+        count = 0
+        for x in _labels:
+            if x == label:
+                count += 1
+        fdups.append({'Label': label, 'repeats': count})
+    df_repeating = pd.DataFrame(fdups)
+    print("Number of columns before dropping duplicates: ", df_repeating.count() + 1)
+    df_repeating.sort_values('Label', inplace=True)
+    df_repeating = df_repeating.drop_duplicates(subset='Label')
+    print("\nNumber of columns after dropping duplicates: ", df_repeating.count() + 1)
+    ax = df_repeating.plot.bar(x='Label', y = 'repeats', rot=0)
+    plt.show()
+    #df_repeating.to_csv(r'repeating labels.csv')
 
 class RangeError(ValueError):
     pass
@@ -96,11 +111,14 @@ def remove_bad_labels(label__list):
     Parameters:
     Label__list (list): A list containing all of the labels for sample data.
     """
-    if '' in label__list:
-        i = label__list.index('')
+    if None in label__list:
+        i = label__list.index(None)
         del label__list[i]
     elif ' ' in label__list:
         i = label__list.index(' ')
+        del label__list[i]
+    elif '' in label__list:
+        i = label__list.index('')
         del label__list[i]
     else:
         for label in label__list:
@@ -226,6 +244,7 @@ def load_data(df,dcolumn,lcolumn):
         raise TypeError(f'dcolumn must be a string, but is a {type(lcolumn)}')
     #Initial conditions/formatting of the data
     traindata = []
+    _labels = []
     df[str(dcolumn)].astype(str)
     df[str(lcolumn)].astype(str)
     for index, row in df.iterrows():
@@ -239,6 +258,7 @@ def load_data(df,dcolumn,lcolumn):
             label__list = label__str.split(',') #Work on this portion to apply the load_diagnostic_data function in a general sense (i.e single label vs multiple labels)
             label__list = remove_duplicate_labels(label__list)
             for label in label__list:
+                _labels.append(label)
                 if label in sample_text:
                     start = sample_text.find(label)
                     end = start + len(label) - 1
@@ -249,6 +269,7 @@ def load_data(df,dcolumn,lcolumn):
             label = label__str
             label = label.lower()
             label = label.strip()
+            _labels.append(label)
             if label in sample_text:
                 start = sample_text.find(label)
                 end = start + len(label) - 1
@@ -263,7 +284,7 @@ def load_data(df,dcolumn,lcolumn):
         traindata.append(trainsample)
     with open('mtsamplesdata.json', 'w', encoding='utf-8') as f:
         y = json.dump(traindata, f, ensure_ascii=False, indent=4)
-    return traindata
+    return traindata, _labels
 
 def train_data(ldata):
     """
@@ -330,9 +351,10 @@ def create_dataframe(ldata):
         transcription = sample[0]
         spdata__dict['sample_string'] = transcription
         spdata__dict['entities'] = entities
-        for entity in entities:
-            label = entity[2]
-            i = entities.index(entity)
+        labels = [entity[2] for entity in entities]
+        labels = sorted(labels)
+        for label in labels:
+            i = labels.index(label)
             spdata__dict[str('label' + str(i))] = label
         spdata__list.append(spdata__dict)
     df = pd.DataFrame(spdata__list)
