@@ -21,6 +21,7 @@ import re
 def main():
     df__transcriptions = pd.read_csv(r'C:\Users\wpegu\Documents\Github\MLpython\Sample_Data\mtsamples_train__test.csv')
     df__transcriptions = df__transcriptions.dropna(axis=0, how='any', subset=['transcription', 'keywords'])
+    df__transcriptions = df__transcriptions.drop_duplicates(subset='transcription')
     df__transcriptions.reset_index(drop=True)
     ldata, _labels = load_data(df__transcriptions, 'transcription','keywords')
     df_spata = create_dataframe(ldata)
@@ -37,8 +38,6 @@ def main():
     df_repeating.sort_values('Label', inplace=True)
     df_repeating = df_repeating.drop_duplicates(subset='Label')
     print("\nNumber of columns after dropping duplicates: ", df_repeating.count() + 1)
-    ax = df_repeating.plot.bar(x='Label', y = 'repeats', rot=0)
-    plt.show()
     #df_repeating.to_csv(r'repeating labels.csv')
 
 class RangeError(ValueError):
@@ -103,7 +102,7 @@ def clean_punctuation(words):
     words = re.sub(r' {2,}', ' ', words)
     return words
 
-def remove_bad_labels(label__list):
+def remove_bad_entities(entities):
     """
     Remove Bad Labels
     -----------------
@@ -111,21 +110,18 @@ def remove_bad_labels(label__list):
     Parameters:
     Label__list (list): A list containing all of the labels for sample data.
     """
-    if None in label__list:
-        i = label__list.index(None)
-        del label__list[i]
-    elif ' ' in label__list:
-        i = label__list.index(' ')
-        del label__list[i]
-    elif '' in label__list:
-        i = label__list.index('')
-        del label__list[i]
-    else:
-        for label in label__list:
-            if '-' in label:
-                i = label__list.index(label)
-                del label__list[i]
-    return label__list
+    for entity in entities:
+        label = entity[2]
+        if label is None:
+            i = entities.index(entity)
+            del entities[i]
+        elif label == "":
+            i = entities.index(entity)
+            del entities[i]
+        elif label == " ":
+            i = entities.index(entity)
+            del entities[i]
+    return entities
 
 def remove_duplicate_labels(label__list):
     """Label Cleaner
@@ -248,7 +244,7 @@ def load_data(df,dcolumn,lcolumn):
     df[str(dcolumn)].astype(str)
     df[str(lcolumn)].astype(str)
     for index, row in df.iterrows():
-        entities__list = []
+        entities = []
         label__str = row[str(lcolumn)]
         label__str = clean_punctuation(label__str)
         sample_text = row[str(dcolumn)]
@@ -262,9 +258,9 @@ def load_data(df,dcolumn,lcolumn):
                 if label in sample_text:
                     start = sample_text.find(label)
                     end = start + len(label) - 1
-                    entities = (start, end, label)
-                    entities__list.append(entities)
-            entities__dict = {'entities': entities__list}
+                    entity = (start, end, label)
+                    entities.append(entity)
+            entities__dict = {'entities': entities}
         else: #There is only one label in the field.
             label = label__str
             label = label.lower()
@@ -273,12 +269,13 @@ def load_data(df,dcolumn,lcolumn):
             if label in sample_text:
                 start = sample_text.find(label)
                 end = start + len(label) - 1
-                entities = (start, end, label)
+                entity = (start, end, label)
             else:
                 start = 0
                 end = len(sample_text) - 1
-                entities = (start, end, label)
-            entities__dict = {'entities': [entities]}
+                entity = (start, end, label)
+            entities.append(entity)
+            entities__dict = {'entities': entities}
         entities__dict = remove_overlapping_entities(entities__dict)
         trainsample = (sample_text, entities__dict)
         traindata.append(trainsample)
