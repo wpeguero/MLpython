@@ -13,13 +13,13 @@ def main():
     df__transcriptions.reset_index(drop=True)
     ldata = load_data(df__transcriptions, 'transcription','keywords') #May need to create a dataframe that contains 1 label per column.
     #print(ldata[0])
-    nlp = train_data(ldata)
+    #nlp = train_data(ldata)
     #Extract data into a sample file for reviewing
     #with open(r'C:\Users\Benjamin\Documents\Programming\Github\MLpython\training_datav4.txt', 'w') as file:
     #    text_train = str(train_data)
     #    file.write(text_train)
     #    file.close()
-    return nlp
+    #return nlp
 
 
 def __load_specialty_data(df,dcolumn,lcolumn):
@@ -59,5 +59,5 @@ def __load_specialty_data(df,dcolumn,lcolumn):
 
 
 if __name__ == "__main__":
-    nlp = main()
-    nlp.to_disk(r'C:\Users\wpegu\Documents\Github\MLpython\mtner')
+    main()
+    #nlp.to_disk(r'C:\Users\wpegu\Documents\Github\MLpython\mtner2')
