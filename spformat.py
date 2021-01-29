@@ -38,7 +38,7 @@ def main():
     df_repeating.sort_values('Label', inplace=True)
     df_repeating = df_repeating.drop_duplicates(subset='Label')
     print("\nNumber of columns after dropping duplicates: ", df_repeating.count() + 1)
-    print(df_repeating)
+    df_repeating = df_repeating.dropna()
     df_repeating.to_csv(r'repeating labels.csv')
 
 class RangeError(ValueError):
@@ -254,7 +254,7 @@ def load_data(df,dcolumn,lcolumn):
         if ',' in label__str: #There are multiple labels in a field.
             label__list = label__str.split(',') #Work on this portion to apply the load_diagnostic_data function in a general sense (i.e single label vs multiple labels)
             label__list = remove_duplicate_labels(label__list)
-            entities = extract_entities(sample_text, label__list)
+            entities, _labels = extract_entities(sample_text, label__list)
             entities__dict = {'entities': entities}
         else: #There is only one label in the field.
             label = label__str
@@ -369,14 +369,14 @@ def extract_entities(sample, labels):
     """
     entities = []
     _labels = []
-    for label in _labels:
+    for label in labels:
         _labels.append(label)
         if label in sample:
             start = sample.find(label)
             end = start + len(label) - 1
             entity = (start, end, label)
             entities.append(entity)
-    return entities
+    return entities, _labels
 
 if __name__ == "__main__":
     main()
