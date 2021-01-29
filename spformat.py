@@ -38,7 +38,8 @@ def main():
     df_repeating.sort_values('Label', inplace=True)
     df_repeating = df_repeating.drop_duplicates(subset='Label')
     print("\nNumber of columns after dropping duplicates: ", df_repeating.count() + 1)
-    #df_repeating.to_csv(r'repeating labels.csv')
+    print(df_repeating)
+    df_repeating.to_csv(r'repeating labels.csv')
 
 class RangeError(ValueError):
     pass
@@ -104,9 +105,9 @@ def clean_punctuation(words):
 
 def remove_bad_entities(entities):
     """
-    Remove Bad Labels
+    Remove Bad entities
     -----------------
-    Function that removes all of the bad labels.
+    Function that removes all of the bad entities.
     Parameters:
     Label__list (list): A list containing all of the labels for sample data.
     """
@@ -253,13 +254,7 @@ def load_data(df,dcolumn,lcolumn):
         if ',' in label__str: #There are multiple labels in a field.
             label__list = label__str.split(',') #Work on this portion to apply the load_diagnostic_data function in a general sense (i.e single label vs multiple labels)
             label__list = remove_duplicate_labels(label__list)
-            for label in label__list:
-                _labels.append(label)
-                if label in sample_text:
-                    start = sample_text.find(label)
-                    end = start + len(label) - 1
-                    entity = (start, end, label)
-                    entities.append(entity)
+            entities = extract_entities(sample_text, label__list)
             entities__dict = {'entities': entities}
         else: #There is only one label in the field.
             label = label__str
@@ -274,7 +269,9 @@ def load_data(df,dcolumn,lcolumn):
                 start = 0
                 end = len(sample_text) - 1
                 entity = (start, end, label)
+            
             entities.append(entity)
+            entities = remove_bad_entities(entities)
             entities__dict = {'entities': entities}
         entities__dict = remove_overlapping_entities(entities__dict)
         trainsample = (sample_text, entities__dict)
@@ -357,6 +354,29 @@ def create_dataframe(ldata):
     df = pd.DataFrame(spdata__list)
     return df
 
+
+def extract_entities(sample, labels):
+    """ 
+    Entity Extractor
+    ----------------
+    ----------------
+    Extracts entitities from a sample string.
+    
+    Parameters:
+    -----------
+     - sample [str]: sentence, paragraph, or string with entities that require extraction.
+     - labels [list]: list containing a set of labels used extract the location of the entity in the sample.
+    """
+    entities = []
+    _labels = []
+    for label in _labels:
+        _labels.append(label)
+        if label in sample:
+            start = sample.find(label)
+            end = start + len(label) - 1
+            entity = (start, end, label)
+            entities.append(entity)
+    return entities
 
 if __name__ == "__main__":
     main()
