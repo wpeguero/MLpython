@@ -3,6 +3,7 @@ Spacy Data Formatting Tool
 --------------------------
 Grabs data from CSV and converts it into a format that can then be utilized to train NER using the Spacy module.
 """
+from typing import Type
 from spacy.util import compounding, minibatch
 from spacy.gold import GoldParse
 from spacy.scorer import Scorer
@@ -25,6 +26,7 @@ def main():
     df__transcriptions.reset_index(drop=True)
     ldata, _labels = load_data(df__transcriptions, 'transcription','keywords')
     df_spata = create_dataframe(ldata)
+    print(_labels)
     #df_spata.to_csv(r'data in spacy format.csv')
     fdups = []
     for label in _labels:
@@ -41,8 +43,15 @@ def main():
     df_repeating = df_repeating.dropna()
     df_repeating.to_csv(r'repeating labels.csv')
 
+
 class RangeError(ValueError):
     pass
+
+class Spata(object):
+    """(Sp)acy D(ata) object."""
+    @property
+    def _constructor(self) -> Type[Spata]:
+        return Spata
 
 
 def evaluate(nlp, examples):
@@ -241,9 +250,9 @@ def load_data(df,dcolumn,lcolumn):
         raise TypeError(f'dcolumn must be a string, but is a {type(lcolumn)}')
     #Initial conditions/formatting of the data
     traindata = []
-    _labels = []
     df[str(dcolumn)].astype(str)
     df[str(lcolumn)].astype(str)
+    entities__dict = {}
     for index, row in df.iterrows():
         entities = []
         label__str = row[str(lcolumn)]
@@ -255,24 +264,10 @@ def load_data(df,dcolumn,lcolumn):
             label__list = label__str.split(',') #Work on this portion to apply the load_diagnostic_data function in a general sense (i.e single label vs multiple labels)
             label__list = remove_duplicate_labels(label__list)
             entities, _labels = extract_entities(sample_text, label__list)
-            entities__dict = {'entities': entities}
-        else: #There is only one label in the field.
-            label = label__str
-            label = label.lower()
-            label = label.strip()
-            _labels.append(label)
-            if label in sample_text:
-                start = sample_text.find(label)
-                end = start + len(label) - 1
-                entity = (start, end, label)
-            else:
-                start = 0
-                end = len(sample_text) - 1
-                entity = (start, end, label)
-            
-            entities.append(entity)
             entities = remove_bad_entities(entities)
             entities__dict = {'entities': entities}
+        else:
+            pass
         entities__dict = remove_overlapping_entities(entities__dict)
         trainsample = (sample_text, entities__dict)
         traindata.append(trainsample)
@@ -355,7 +350,7 @@ def create_dataframe(ldata):
     return df
 
 
-def extract_entities(sample, labels):
+def extract_entities(sample, labels, _labels = []):
     """ 
     Entity Extractor
     ----------------
@@ -368,9 +363,8 @@ def extract_entities(sample, labels):
      - labels [list]: list containing a set of labels used extract the location of the entity in the sample.
     """
     entities = []
-    _labels = []
+    _labels.extend(labels)
     for label in labels:
-        _labels.append(label)
         if label in sample:
             start = sample.find(label)
             end = start + len(label) - 1
